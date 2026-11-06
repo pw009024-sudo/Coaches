@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
-import { supabase } from './supabase';
+import { api, getName } from './api';
 import { processPdf } from './pdf';
-import { AGE_GROUPS, GOALS, METHODS, BUCKET } from './config';
+import { AGE_GROUPS, GOALS, METHODS } from './config';
 import TagPicker from './TagPicker';
 
 const emptyTags = { age_groups: [], goals: [], methods: [] };
@@ -79,29 +79,28 @@ export default function Upload({ onSaved }) {
     setError('');
     let done = 0;
     try {
-      const rows = [];
       for (const p of selected) {
-        setStatus(`Bild ${++done} von ${selected.length} wird hochgeladen …`);
-        const path = `${crypto.randomUUID()}.webp`;
-        const { error: upErr } = await supabase.storage
-          .from(BUCKET)
-          .upload(path, p.blob, { contentType: 'image/webp' });
-        if (upErr) throw upErr;
-        rows.push({
-          title: p.title.trim() || `Seite ${p.pageNumber}`,
-          description: p.text,
-          image_path: path,
-          age_groups: p.age_groups,
-          goals: p.goals,
-          methods: p.methods,
-          duration_min: p.duration_min ? Number(p.duration_min) : null,
-          source_name: p.sourceName,
-          page_number: p.pageNumber,
+        setStatus(`Übung ${++done} von ${selected.length} wird gespeichert …`);
+        const id = crypto.randomUUID();
+        await api(`images/${id}`, { method: 'PUT', image: p.blob });
+        await api('exercises', {
+          method: 'POST',
+          body: {
+            id,
+            title: p.title.trim() || `Seite ${p.pageNumber}`,
+            description: p.text,
+            age_groups: p.age_groups,
+            goals: p.goals,
+            methods: p.methods,
+            duration_min: p.duration_min ? Number(p.duration_min) : null,
+            source_name: p.sourceName,
+            page_number: p.pageNumber,
+            created_by: getName(),
+          },
         });
+        setPages((prev) => prev.filter((x) => x.key !== p.key));
+        URL.revokeObjectURL(p.previewUrl);
       }
-      setStatus('Übungen werden gespeichert …');
-      const { error: dbErr } = await supabase.from('exercises').insert(rows);
-      if (dbErr) throw dbErr;
       clearAll();
       setStatus('');
       onSaved?.();

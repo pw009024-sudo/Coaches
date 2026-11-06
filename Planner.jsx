@@ -1,7 +1,6 @@
 import { useState } from 'react';
-import { supabase } from './supabase';
+import { api, getName, imageUrl } from './api';
 import { AGE_GROUPS, emptyDraft } from './config';
-import { useSignedUrls } from './useSignedUrls';
 
 export default function Planner({ draft, setDraft, exercises, onGoLibrary }) {
   const [status, setStatus] = useState('');
@@ -10,9 +9,6 @@ export default function Planner({ draft, setDraft, exercises, onGoLibrary }) {
 
   const byId = Object.fromEntries(exercises.map((e) => [e.id, e]));
   const allItems = draft.blocks.flatMap((b) => b.items);
-  const urls = useSignedUrls(
-    [...new Set(allItems.map((i) => byId[i.exerciseId]?.image_path).filter(Boolean))]
-  );
   const total = allItems.reduce((s, i) => s + (Number(i.minutes) || 0), 0);
 
   const set = (patch) => setDraft((d) => ({ ...d, ...patch }));
@@ -54,15 +50,18 @@ export default function Planner({ draft, setDraft, exercises, onGoLibrary }) {
       training_date: draft.training_date || null,
       notes: draft.notes,
       blocks: draft.blocks,
-      updated_at: new Date().toISOString(),
     };
-    const query =
-      draft.id && !asCopy
-        ? supabase.from('trainings').update(payload).eq('id', draft.id).select().single()
-        : supabase.from('trainings').insert(payload).select().single();
-    const { data, error } = await query;
+    let data;
+    try {
+      data =
+        draft.id && !asCopy
+          ? await api(`trainings/${draft.id}`, { method: 'PUT', body: payload })
+          : await api('trainings', { method: 'POST', body: { ...payload, created_by: getName() } });
+    } catch (e) {
+      setBusy(false);
+      return setError('Speichern fehlgeschlagen: ' + e.message);
+    }
     setBusy(false);
-    if (error) return setError('Speichern fehlgeschlagen: ' + error.message);
     setDraft((d) => ({ ...d, id: data.id, title: data.title }));
     setStatus(asCopy ? 'Als neues Training gespeichert.' : 'Training gespeichert.');
     setTimeout(() => setStatus(''), 3000);
@@ -119,7 +118,7 @@ export default function Planner({ draft, setDraft, exercises, onGoLibrary }) {
                     return (
                       <li key={ii} className="plan-item">
                         <div className="mini-thumb">
-                          {ex && urls[ex.image_path] && <img src={urls[ex.image_path]} alt="" />}
+                          {ex && <img src={imageUrl(ex.id)} alt="" />}
                         </div>
                         <div className="plan-item-main">
                           <strong>{ex ? ex.title : 'Übung wurde gelöscht'}</strong>
@@ -176,7 +175,7 @@ export default function Planner({ draft, setDraft, exercises, onGoLibrary }) {
                 <div key={i} className="print-item">
                   <h3>{ex?.title} ({it.minutes} Min.)</h3>
                   {it.note && <p>{it.note}</p>}
-                  {ex && urls[ex.image_path] && <img src={urls[ex.image_path]} alt="" />}
+                  {ex && <img src={imageUrl(ex.id)} alt="" />}
                 </div>
               );
             })}

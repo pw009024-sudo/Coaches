@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { supabase, supabaseConfigured } from './supabase';
+import { api, getToken, getName, logout } from './api';
 import { emptyDraft } from './config';
 import Login from './Login';
 import Library from './Library';
@@ -16,38 +16,30 @@ const TABS = [
 ];
 
 export default function App() {
-  const [session, setSession] = useState(null);
-  const [authReady, setAuthReady] = useState(false);
+  const [loggedIn, setLoggedIn] = useState(Boolean(getToken()));
   const [tab, setTab] = useState('library');
   const [exercises, setExercises] = useState([]);
   const [loadError, setLoadError] = useState('');
   const [draft, setDraft] = useState(emptyDraft);
 
   useEffect(() => {
-    if (!supabaseConfigured) return;
-    supabase.auth.getSession().then(({ data }) => {
-      setSession(data.session);
-      setAuthReady(true);
-    });
-    const { data: sub } = supabase.auth.onAuthStateChange((_e, s) => setSession(s));
-    return () => sub.subscription.unsubscribe();
+    const onLogout = () => setLoggedIn(false);
+    window.addEventListener('coaches-logout', onLogout);
+    return () => window.removeEventListener('coaches-logout', onLogout);
   }, []);
 
   const loadExercises = useCallback(async () => {
-    const { data, error } = await supabase
-      .from('exercises')
-      .select('*')
-      .order('created_at', { ascending: false });
-    if (error) setLoadError('Übungen konnten nicht geladen werden: ' + error.message);
-    else {
+    try {
+      setExercises(await api('exercises'));
       setLoadError('');
-      setExercises(data);
+    } catch (e) {
+      setLoadError('Übungen konnten nicht geladen werden: ' + e.message);
     }
   }, []);
 
   useEffect(() => {
-    if (session) loadExercises();
-  }, [session, loadExercises]);
+    if (loggedIn) loadExercises();
+  }, [loggedIn, loadExercises]);
 
   const addToDraft = (exercise, phase) => {
     setDraft((d) => ({
@@ -62,20 +54,7 @@ export default function App() {
 
   const draftCount = draft.blocks.reduce((n, b) => n + b.items.length, 0);
 
-  if (!supabaseConfigured) {
-    return (
-      <main className="setup-note">
-        <h1>Fast geschafft</h1>
-        <p>
-          Die Verbindung zur Datenbank fehlt noch. Trage <code>VITE_SUPABASE_URL</code> und{' '}
-          <code>VITE_SUPABASE_ANON_KEY</code> bei Netlify unter „Environment variables“ ein
-          (oder lokal in einer <code>.env</code>-Datei) und starte danach einen neuen Deploy.
-        </p>
-      </main>
-    );
-  }
-  if (!authReady) return null;
-  if (!session) return <Login />;
+  if (!loggedIn) return <Login onLoggedIn={() => setLoggedIn(true)} />;
 
   return (
     <div className="app">
@@ -84,8 +63,8 @@ export default function App() {
         <div className="topbar-inner">
           <h1 className="brand"><img src="/icon.svg" alt="" className="brand-icon" />Coaches</h1>
           <div className="account">
-            <span>{session.user.email}</span>
-            <button className="link-btn" onClick={() => supabase.auth.signOut()}>Abmelden</button>
+            <span>{getName()}</span>
+            <button className="link-btn" onClick={logout}>Abmelden</button>
           </div>
         </div>
         <nav className="tabs" aria-label="Bereiche">
@@ -106,29 +85,16 @@ export default function App() {
       <main className="content">
         {loadError && <p className="error no-print">{loadError}</p>}
         {tab === 'library' && (
-          <Library
-            exercises={exercises}
-            userId={session.user.id}
-            onChanged={loadExercises}
-            onAdd={addToDraft}
-            onGoUpload={() => setTab('upload')}
-          />
+          <Library exercises={exercises} onChanged={loadExercises} onAdd={addToDraft} onGoUpload={() => setTab('upload')} />
         )}
         {tab === 'upload' && (
           <Upload onSaved={async () => { await loadExercises(); setTab('library'); }} />
         )}
         {tab === 'planner' && (
-          <Planner
-            draft={draft}
-            setDraft={setDraft}
-            exercises={exercises}
-            onGoLibrary={() => setTab('library')}
-          />
+          <Planner draft={draft} setDraft={setDraft} exercises={exercises} onGoLibrary={() => setTab('library')} />
         )}
         {tab === 'trainings' && (
           <TrainingList
-            userId={session.user.id}
-            exercises={exercises}
             onOpen={(t) => {
               setDraft({
                 id: t.id,

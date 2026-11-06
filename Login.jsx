@@ -1,19 +1,33 @@
-import { useState } from 'react';
-import { supabase } from './supabase';
+import { useEffect, useState } from 'react';
+import { api, getName, saveLogin } from './api';
 import CourtMark from './CourtMark';
 
-export default function Login() {
-  const [email, setEmail] = useState('');
+export default function Login({ onLoggedIn }) {
+  const [setupDone, setSetupDone] = useState(null);
+  const [name, setName] = useState(getName());
   const [password, setPassword] = useState('');
+  const [repeat, setRepeat] = useState('');
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
 
+  useEffect(() => {
+    api('status')
+      .then((s) => setSetupDone(s.setup))
+      .catch(() => setError('Der Server ist nicht erreichbar. Läuft die App auf Netlify?'));
+  }, []);
+
   const submit = async (e) => {
     e.preventDefault();
-    setBusy(true);
     setError('');
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error) setError('Anmeldung fehlgeschlagen. Prüfe E-Mail und Passwort.');
+    if (!setupDone && password !== repeat) return setError('Die beiden Passwörter stimmen nicht überein.');
+    setBusy(true);
+    try {
+      const { token } = await api(setupDone ? 'login' : 'setup', { method: 'POST', body: { password } });
+      saveLogin(token, name.trim());
+      onLoggedIn();
+    } catch (err) {
+      setError(err.message);
+    }
     setBusy(false);
   };
 
@@ -22,19 +36,34 @@ export default function Login() {
       <div className="login-panel">
         <CourtMark />
         <h1 className="brand"><img src="/icon.svg" alt="" className="brand-icon" />Coaches</h1>
-        <p className="muted">Melde dich mit dem Zugang an, den dir dein Vereinsadmin angelegt hat.</p>
-        <form onSubmit={submit} className="stack">
-          <label>
-            E-Mail
-            <input type="email" autoComplete="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
-          </label>
-          <label>
-            Passwort
-            <input type="password" autoComplete="current-password" required value={password} onChange={(e) => setPassword(e.target.value)} />
-          </label>
-          {error && <p className="error">{error}</p>}
-          <button className="btn primary" disabled={busy}>{busy ? 'Wird angemeldet …' : 'Anmelden'}</button>
-        </form>
+        {setupDone === false && (
+          <p className="muted">
+            Willkommen! Lege einmalig ein Teampasswort fest. Alle Trainer melden sich später damit an.
+          </p>
+        )}
+        {setupDone && <p className="muted">Melde dich mit deinem Namen und dem Teampasswort an.</p>}
+        {setupDone !== null && (
+          <form onSubmit={submit} className="stack">
+            <label>
+              Dein Name
+              <input autoComplete="name" required value={name} onChange={(e) => setName(e.target.value)} placeholder="z. B. Thomas" />
+            </label>
+            <label>
+              Teampasswort
+              <input type="password" autoComplete={setupDone ? 'current-password' : 'new-password'} required minLength={6} value={password} onChange={(e) => setPassword(e.target.value)} />
+            </label>
+            {!setupDone && (
+              <label>
+                Teampasswort wiederholen
+                <input type="password" autoComplete="new-password" required value={repeat} onChange={(e) => setRepeat(e.target.value)} />
+              </label>
+            )}
+            <button className="btn primary" disabled={busy}>
+              {busy ? 'Einen Moment …' : setupDone ? 'Anmelden' : 'Teampasswort festlegen'}
+            </button>
+          </form>
+        )}
+        {error && <p className="error">{error}</p>}
       </div>
     </div>
   );

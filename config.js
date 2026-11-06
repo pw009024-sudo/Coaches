@@ -37,7 +37,6 @@ export const METHODS = [
 
 export const PHASES = ['Aufwärmen', 'Hauptteil', 'Abschluss'];
 
-export const BUCKET = 'uebungen';
 
 export function emptyDraft() {
   return {

@@ -1,27 +1,31 @@
 import { useEffect, useState } from 'react';
-import { supabase } from './supabase';
+import { api } from './api';
 
-export default function TrainingList({ userId, onOpen }) {
+const sortKey = (t) => t.training_date || t.updated_at || '';
+
+export default function TrainingList({ onOpen }) {
   const [trainings, setTrainings] = useState(null);
   const [error, setError] = useState('');
 
   const load = async () => {
-    const { data, error } = await supabase
-      .from('trainings')
-      .select('*')
-      .order('training_date', { ascending: false, nullsFirst: false })
-      .order('updated_at', { ascending: false });
-    if (error) setError('Trainings konnten nicht geladen werden: ' + error.message);
-    else setTrainings(data);
+    try {
+      const data = await api('trainings');
+      setTrainings(data.sort((a, b) => sortKey(b).localeCompare(sortKey(a))));
+    } catch (e) {
+      setError('Trainings konnten nicht geladen werden: ' + e.message);
+    }
   };
 
   useEffect(() => { load(); }, []);
 
   const remove = async (t) => {
     if (!confirm(`„${t.title}“ löschen?`)) return;
-    const { error } = await supabase.from('trainings').delete().eq('id', t.id);
-    if (error) setError('Löschen fehlgeschlagen: ' + error.message);
-    else load();
+    try {
+      await api(`trainings/${t.id}`, { method: 'DELETE' });
+      load();
+    } catch (e) {
+      setError('Löschen fehlgeschlagen: ' + e.message);
+    }
   };
 
   if (error) return <p className="error">{error}</p>;
@@ -44,13 +48,13 @@ export default function TrainingList({ userId, onOpen }) {
             <div>
               <strong>{t.title}</strong>
               <span className="muted">
-                {[t.training_date && new Date(t.training_date).toLocaleDateString('de-DE'), t.age_group, `${minutes} Min.`]
+                {[t.training_date && new Date(t.training_date).toLocaleDateString('de-DE'), t.age_group, `${minutes} Min.`, t.created_by && `von ${t.created_by}`]
                   .filter(Boolean).join(', ')}
               </span>
             </div>
             <div className="row">
               <button className="btn" onClick={() => onOpen(t)}>Öffnen</button>
-              {t.created_by === userId && <button className="btn ghost" onClick={() => remove(t)}>Löschen</button>}
+              <button className="btn ghost" onClick={() => remove(t)}>Löschen</button>
             </div>
           </li>
         );

@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
-import { supabase } from './supabase';
-import { AGE_GROUPS, GOALS, METHODS, PHASES, BUCKET } from './config';
+import { api } from './api';
+import { AGE_GROUPS, GOALS, METHODS, PHASES } from './config';
 import TagPicker from './TagPicker';
 
-export default function ExerciseModal({ exercise, imageUrl, canDelete, onClose, onChanged, onAdd }) {
+export default function ExerciseModal({ exercise, imageUrl, onClose, onChanged, onAdd }) {
   const [editing, setEditing] = useState(false);
   const [form, setForm] = useState(exercise);
   const [busy, setBusy] = useState(false);
@@ -21,19 +21,23 @@ export default function ExerciseModal({ exercise, imageUrl, canDelete, onClose, 
 
   const save = async () => {
     setBusy(true);
-    const { error } = await supabase
-      .from('exercises')
-      .update({
-        title: form.title,
-        description: form.description,
-        age_groups: form.age_groups,
-        goals: form.goals,
-        methods: form.methods,
-        duration_min: form.duration_min ? Number(form.duration_min) : null,
-      })
-      .eq('id', exercise.id);
+    try {
+      await api(`exercises/${exercise.id}`, {
+        method: 'PUT',
+        body: {
+          title: form.title,
+          description: form.description,
+          age_groups: form.age_groups,
+          goals: form.goals,
+          methods: form.methods,
+          duration_min: form.duration_min ? Number(form.duration_min) : null,
+        },
+      });
+    } catch (e) {
+      setBusy(false);
+      return setError('Speichern fehlgeschlagen: ' + e.message);
+    }
     setBusy(false);
-    if (error) return setError('Speichern fehlgeschlagen: ' + error.message);
     setEditing(false);
     onChanged();
   };
@@ -41,12 +45,12 @@ export default function ExerciseModal({ exercise, imageUrl, canDelete, onClose, 
   const remove = async () => {
     if (!confirm(`„${exercise.title}“ endgültig löschen?`)) return;
     setBusy(true);
-    const { error } = await supabase.from('exercises').delete().eq('id', exercise.id);
-    if (error) {
+    try {
+      await api(`exercises/${exercise.id}`, { method: 'DELETE' });
+    } catch (e) {
       setBusy(false);
-      return setError('Löschen fehlgeschlagen: ' + error.message);
+      return setError('Löschen fehlgeschlagen: ' + e.message);
     }
-    await supabase.storage.from(BUCKET).remove([exercise.image_path]);
     onChanged();
     onClose();
   };
@@ -60,7 +64,7 @@ export default function ExerciseModal({ exercise, imageUrl, canDelete, onClose, 
     <dialog ref={dialogRef} className="modal" onClose={onClose} onClick={(e) => e.target === dialogRef.current && onClose()}>
       <div className="modal-body">
         <div className="modal-image">
-          {imageUrl ? <img src={imageUrl} alt={`Übungsblatt: ${exercise.title}`} /> : <span className="thumb-wait" />}
+          <img src={imageUrl} alt={`Übungsblatt: ${exercise.title}`} />
         </div>
 
         <div className="modal-side">
@@ -75,6 +79,7 @@ export default function ExerciseModal({ exercise, imageUrl, canDelete, onClose, 
                 {exercise.goals.length > 0 && (<><dt>Ziel</dt><dd>{exercise.goals.join(', ')}</dd></>)}
                 {exercise.methods.length > 0 && (<><dt>Methode</dt><dd>{exercise.methods.join(', ')}</dd></>)}
                 {exercise.source_name && (<><dt>Quelle</dt><dd>{exercise.source_name}, Seite {exercise.page_number}</dd></>)}
+                {exercise.created_by && (<><dt>Hochgeladen von</dt><dd>{exercise.created_by}</dd></>)}
               </dl>
 
               <div className="add-box">
@@ -89,7 +94,7 @@ export default function ExerciseModal({ exercise, imageUrl, canDelete, onClose, 
 
               <div className="row">
                 <button className="btn ghost" onClick={() => setEditing(true)}>Bearbeiten</button>
-                {canDelete && <button className="btn danger" onClick={remove} disabled={busy}>Löschen</button>}
+                <button className="btn danger" onClick={remove} disabled={busy}>Löschen</button>
               </div>
             </>
           ) : (

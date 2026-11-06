@@ -1,12 +1,12 @@
 import { useMemo, useState } from 'react';
 import { AGE_GROUPS, GOALS, METHODS } from './config';
-import { useSignedUrls } from './useSignedUrls';
+import { imageUrl } from './api';
 import TagPicker from './TagPicker';
 import ExerciseModal from './ExerciseModal';
 
 const matches = (selected, values) => selected.length === 0 || selected.some((s) => values.includes(s));
 
-export default function Library({ exercises, userId, onChanged, onAdd, onGoUpload }) {
+export default function Library({ exercises, onChanged, onAdd, onGoUpload }) {
   const [q, setQ] = useState('');
   const [age, setAge] = useState([]);
   const [goal, setGoal] = useState([]);
@@ -28,7 +28,6 @@ export default function Library({ exercises, userId, onChanged, onAdd, onGoUploa
     );
   }, [exercises, q, age, goal, method]);
 
-  const urls = useSignedUrls(filtered.map((e) => e.image_path));
   const open = exercises.find((e) => e.id === openId);
   const activeFilters = age.length + goal.length + method.length;
 
@@ -80,7 +79,7 @@ export default function Library({ exercises, userId, onChanged, onAdd, onGoUploa
             <li key={e.id}>
               <button className="ex-card" onClick={() => setOpenId(e.id)}>
                 <div className="thumb">
-                  {urls[e.image_path] ? <img src={urls[e.image_path]} alt="" loading="lazy" /> : <span className="thumb-wait" />}
+                  <img src={imageUrl(e.id)} alt="" loading="lazy" />
                 </div>
                 <span className="ex-title">{e.title}</span>
                 <span className="ex-meta">
@@ -95,8 +94,7 @@ export default function Library({ exercises, userId, onChanged, onAdd, onGoUploa
       {open && (
         <ExerciseModal
           exercise={open}
-          imageUrl={urls[open.image_path]}
-          canDelete={open.created_by === userId}
+          imageUrl={imageUrl(open.id)}
           onClose={() => setOpenId(null)}
           onChanged={onChanged}
           onAdd={onAdd}
