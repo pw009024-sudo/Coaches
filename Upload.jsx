@@ -1,11 +1,11 @@
 import { useEffect, useRef, useState } from 'react';
 import { api } from './client.js';
 import { processPdf } from './pdf';
-import { AGE_GROUPS, GOALS, METHODS } from './config';
+import { AREAS, AGE_GROUPS, GOALS, METHODS } from './config';
 import TagPicker from './TagPicker';
 import VisibilityToggle from './VisibilityToggle';
 
-const emptyTags = { age_groups: [], goals: [], methods: [] };
+const emptyTags = { areas: [], age_groups: [], goals: [], methods: [] };
 
 export default function Upload({ onSaved }) {
   const [pages, setPages] = useState([]);
@@ -15,6 +15,7 @@ export default function Upload({ onSaved }) {
   const [saving, setSaving] = useState(false);
   const [batch, setBatch] = useState(emptyTags);
   const [shared, setShared] = useState(true);
+  const [batchPlayers, setBatchPlayers] = useState('');
   const inputRef = useRef(null);
   const pagesRef = useRef(pages);
   pagesRef.current = pages;
@@ -42,6 +43,7 @@ export default function Upload({ onSaved }) {
             sourceName: file.name,
             include: true,
             duration_min: '',
+            min_players: '',
             ...emptyTags,
           })),
         ]);
@@ -61,7 +63,9 @@ export default function Upload({ onSaved }) {
         p.include
           ? {
               ...p,
+              areas: [...new Set([...p.areas, ...batch.areas])],
               age_groups: [...new Set([...p.age_groups, ...batch.age_groups])],
+              min_players: batchPlayers || p.min_players,
               goals: [...new Set([...p.goals, ...batch.goals])],
               methods: [...new Set([...p.methods, ...batch.methods])],
             }
@@ -91,6 +95,8 @@ export default function Upload({ onSaved }) {
             id,
             title: p.title.trim() || `Seite ${p.pageNumber}`,
             description: p.text,
+            areas: p.areas,
+            min_players: p.min_players ? Number(p.min_players) : null,
             age_groups: p.age_groups,
             goals: p.goals,
             methods: p.methods,
@@ -145,8 +151,13 @@ export default function Upload({ onSaved }) {
           <div className="batch panel">
             <h2>Kategorien für alle ausgewählten Seiten</h2>
             <p className="muted">Wähle hier, was für alle Seiten gilt, und übernimm es mit einem Klick. Einzelne Seiten kannst du danach noch anpassen.</p>
+            <TagPicker label="Bereich im Training" options={AREAS} value={batch.areas} onChange={(v) => setBatch({ ...batch, areas: v })} />
             <TagPicker label="Altersklasse" options={AGE_GROUPS} value={batch.age_groups} onChange={(v) => setBatch({ ...batch, age_groups: v })} />
-            <TagPicker label="Ziel" options={GOALS} value={batch.goals} onChange={(v) => setBatch({ ...batch, goals: v })} />
+            <label className="narrow players-field">
+              Mindestanzahl Spieler
+              <input type="number" min="1" max="40" value={batchPlayers} onChange={(e) => setBatchPlayers(e.target.value)} />
+            </label>
+            <TagPicker label="Schwerpunkt" options={GOALS} value={batch.goals} onChange={(v) => setBatch({ ...batch, goals: v })} />
             <TagPicker label="Methode" options={METHODS} value={batch.methods} onChange={(v) => setBatch({ ...batch, methods: v })} />
             <button className="btn" onClick={applyBatch}>Auf ausgewählte Seiten übernehmen</button>
           </div>
@@ -179,12 +190,19 @@ export default function Upload({ onSaved }) {
                     Titel
                     <input value={p.title} onChange={(e) => update(p.key, { title: e.target.value })} />
                   </label>
-                  <label className="narrow">
-                    Dauer in Minuten
-                    <input type="number" min="1" max="180" value={p.duration_min} onChange={(e) => update(p.key, { duration_min: e.target.value })} />
-                  </label>
+                  <div className="row wrap">
+                    <label className="narrow">
+                      Mindestanzahl Spieler
+                      <input type="number" min="1" max="40" value={p.min_players} onChange={(e) => update(p.key, { min_players: e.target.value })} />
+                    </label>
+                    <label className="narrow">
+                      Dauer in Minuten
+                      <input type="number" min="1" max="180" value={p.duration_min} onChange={(e) => update(p.key, { duration_min: e.target.value })} />
+                    </label>
+                  </div>
+                  <TagPicker compact label="Bereich im Training" options={AREAS} value={p.areas} onChange={(v) => update(p.key, { areas: v })} />
                   <TagPicker compact label="Altersklasse" options={AGE_GROUPS} value={p.age_groups} onChange={(v) => update(p.key, { age_groups: v })} />
-                  <TagPicker compact label="Ziel" options={GOALS} value={p.goals} onChange={(v) => update(p.key, { goals: v })} />
+                  <TagPicker compact label="Schwerpunkt" options={GOALS} value={p.goals} onChange={(v) => update(p.key, { goals: v })} />
                   <TagPicker compact label="Methode" options={METHODS} value={p.methods} onChange={(v) => update(p.key, { methods: v })} />
                 </div>
               </li>

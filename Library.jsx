@@ -1,13 +1,15 @@
 import { useMemo, useState } from 'react';
-import { AGE_GROUPS, GOALS, METHODS } from './config';
+import { AREAS, AGE_GROUPS, GOALS, METHODS } from './config';
 import { imageUrl, isMine, isShared } from './client.js';
 import TagPicker from './TagPicker';
 import ExerciseModal from './ExerciseModal';
 
-const matches = (selected, values) => selected.length === 0 || selected.some((s) => values.includes(s));
+const matches = (selected, values = []) => selected.length === 0 || selected.some((s) => values.includes(s));
 
 export default function Library({ exercises, onChanged, onAdd, onGoUpload }) {
   const [q, setQ] = useState('');
+  const [area, setArea] = useState([]);
+  const [players, setPlayers] = useState('');
   const [age, setAge] = useState([]);
   const [goal, setGoal] = useState([]);
   const [method, setMethod] = useState([]);
@@ -20,6 +22,8 @@ export default function Library({ exercises, onChanged, onAdd, onGoUpload }) {
     return exercises.filter(
       (e) =>
         (scope === 'all' || (scope === 'shared' ? isShared(e) : isMine(e))) &&
+        matches(area, e.areas) &&
+        (!players || !e.min_players || e.min_players <= Number(players)) &&
         matches(age, e.age_groups) &&
         matches(goal, e.goals) &&
         matches(method, e.methods) &&
@@ -28,10 +32,10 @@ export default function Library({ exercises, onChanged, onAdd, onGoUpload }) {
           e.description.toLowerCase().includes(needle) ||
           (e.source_name || '').toLowerCase().includes(needle))
     );
-  }, [exercises, q, age, goal, method, scope]);
+  }, [exercises, q, area, players, age, goal, method, scope]);
 
   const open = exercises.find((e) => e.id === openId);
-  const activeFilters = age.length + goal.length + method.length;
+  const activeFilters = area.length + age.length + goal.length + method.length + (players ? 1 : 0);
 
   if (exercises.length === 0) {
     return (
@@ -66,11 +70,16 @@ export default function Library({ exercises, onChanged, onAdd, onGoUpload }) {
 
       {showFilters && (
         <div className="panel filters">
+          <TagPicker label="Bereich im Training" options={AREAS} value={area} onChange={setArea} />
           <TagPicker label="Altersklasse" options={AGE_GROUPS} value={age} onChange={setAge} />
-          <TagPicker label="Ziel" options={GOALS} value={goal} onChange={setGoal} />
+          <label className="narrow players-field">
+            Spieler heute im Training
+            <input type="number" min="1" max="40" value={players} placeholder="z. B. 8" onChange={(e) => setPlayers(e.target.value)} />
+          </label>
+          <TagPicker label="Schwerpunkt" options={GOALS} value={goal} onChange={setGoal} />
           <TagPicker label="Methode" options={METHODS} value={method} onChange={setMethod} />
           {activeFilters > 0 && (
-            <button className="link-btn" onClick={() => { setAge([]); setGoal([]); setMethod([]); }}>
+            <button className="link-btn" onClick={() => { setArea([]); setPlayers(''); setAge([]); setGoal([]); setMethod([]); }}>
               Filter zurücksetzen
             </button>
           )}
@@ -92,7 +101,7 @@ export default function Library({ exercises, onChanged, onAdd, onGoUpload }) {
                 </div>
                 <span className="ex-title">{e.title}</span>
                 <span className="ex-meta">
-                  {[e.age_groups[0], e.goals[0], e.duration_min && `${e.duration_min} Min.`].filter(Boolean).join(', ')}
+                  {[(e.areas || [])[0], e.age_groups[0], e.min_players && `ab ${e.min_players} Spielern`, e.duration_min && `${e.duration_min} Min.`].filter(Boolean).join(', ')}
                 </span>
               </button>
             </li>

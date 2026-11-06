@@ -1,11 +1,13 @@
 import { useEffect, useRef, useState } from 'react';
 import { api, isMine, isShared, canDelete } from './client.js';
-import { AGE_GROUPS, GOALS, METHODS, PHASES } from './config';
+import { AREAS, AGE_GROUPS, GOALS, METHODS, PHASES } from './config';
 import TagPicker from './TagPicker';
+
+const withDefaults = (e) => ({ areas: [], min_players: null, ...e });
 
 export default function ExerciseModal({ exercise, imageUrl, onClose, onChanged, onAdd }) {
   const [editing, setEditing] = useState(false);
-  const [form, setForm] = useState(exercise);
+  const [form, setForm] = useState(withDefaults(exercise));
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [added, setAdded] = useState('');
@@ -17,7 +19,7 @@ export default function ExerciseModal({ exercise, imageUrl, onClose, onChanged, 
     return () => d?.close();
   }, []);
 
-  useEffect(() => setForm(exercise), [exercise]);
+  useEffect(() => setForm(withDefaults(exercise)), [exercise]);
 
   const setVisibility = async (shared) => {
     setBusy(true);
@@ -38,6 +40,8 @@ export default function ExerciseModal({ exercise, imageUrl, onClose, onChanged, 
         body: {
           title: form.title,
           description: form.description,
+          areas: form.areas,
+          min_players: form.min_players ? Number(form.min_players) : null,
           age_groups: form.age_groups,
           goals: form.goals,
           methods: form.methods,
@@ -85,9 +89,11 @@ export default function ExerciseModal({ exercise, imageUrl, onClose, onChanged, 
             <>
               <h2>{exercise.title}</h2>
               <dl className="facts">
+                {exercise.areas?.length > 0 && (<><dt>Bereich</dt><dd>{exercise.areas.join(', ')}</dd></>)}
+                {exercise.min_players && (<><dt>Spieler</dt><dd>mindestens {exercise.min_players}</dd></>)}
                 {exercise.duration_min && (<><dt>Dauer</dt><dd>{exercise.duration_min} Minuten</dd></>)}
                 {exercise.age_groups.length > 0 && (<><dt>Altersklasse</dt><dd>{exercise.age_groups.join(', ')}</dd></>)}
-                {exercise.goals.length > 0 && (<><dt>Ziel</dt><dd>{exercise.goals.join(', ')}</dd></>)}
+                {exercise.goals.length > 0 && (<><dt>Schwerpunkt</dt><dd>{exercise.goals.join(', ')}</dd></>)}
                 {exercise.methods.length > 0 && (<><dt>Methode</dt><dd>{exercise.methods.join(', ')}</dd></>)}
                 {exercise.source_name && (<><dt>Quelle</dt><dd>{exercise.source_name}, Seite {exercise.page_number}</dd></>)}
                 {exercise.created_by && (<><dt>Hochgeladen von</dt><dd>{exercise.created_by}</dd></>)}
@@ -117,17 +123,21 @@ export default function ExerciseModal({ exercise, imageUrl, onClose, onChanged, 
           ) : (
             <div className="stack">
               <label>Titel<input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} /></label>
+              <label className="narrow">Mindestanzahl Spieler
+                <input type="number" min="1" max="40" value={form.min_players ?? ''} onChange={(e) => setForm({ ...form, min_players: e.target.value })} />
+              </label>
               <label className="narrow">Dauer in Minuten
                 <input type="number" min="1" max="180" value={form.duration_min ?? ''} onChange={(e) => setForm({ ...form, duration_min: e.target.value })} />
               </label>
+              <TagPicker compact label="Bereich im Training" options={AREAS} value={form.areas} onChange={(v) => setForm({ ...form, areas: v })} />
               <TagPicker compact label="Altersklasse" options={AGE_GROUPS} value={form.age_groups} onChange={(v) => setForm({ ...form, age_groups: v })} />
-              <TagPicker compact label="Ziel" options={GOALS} value={form.goals} onChange={(v) => setForm({ ...form, goals: v })} />
+              <TagPicker compact label="Schwerpunkt" options={GOALS} value={form.goals} onChange={(v) => setForm({ ...form, goals: v })} />
               <TagPicker compact label="Methode" options={METHODS} value={form.methods} onChange={(v) => setForm({ ...form, methods: v })} />
               <label>Text der Seite (für die Suche)
                 <textarea rows="6" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
               </label>
               <div className="row">
-                <button className="btn ghost" onClick={() => { setForm(exercise); setEditing(false); }}>Abbrechen</button>
+                <button className="btn ghost" onClick={() => { setForm(withDefaults(exercise)); setEditing(false); }}>Abbrechen</button>
                 <button className="btn primary" onClick={save} disabled={busy}>Änderungen speichern</button>
               </div>
             </div>

@@ -184,7 +184,7 @@ export default function Planner({ draft, setDraft, exercises, onGoLibrary }) {
               const ex = byId[it.exerciseId];
               return (
                 <div key={i} className="print-item">
-                  <h3>{ex?.title} ({it.minutes} Min.)</h3>
+                  <h3>{ex?.title} ({[`${it.minutes} Min.`, ex?.min_players && `ab ${ex.min_players} Spielern`].filter(Boolean).join(', ')})</h3>
                   {it.note && <p>{it.note}</p>}
                   {ex && <img src={imageUrl(ex.id)} alt="" />}
                 </div>

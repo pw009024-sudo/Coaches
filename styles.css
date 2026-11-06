@@ -303,3 +303,4 @@ label.check input { width: auto; }
 .vis-tag.shared { background: var(--court); }
 .list-section { margin-bottom: 2rem; }
 .list-section h2 { border-bottom: 2px solid var(--court); padding-bottom: .3rem; }
+.players-field { margin-bottom: .9rem; }

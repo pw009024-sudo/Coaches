@@ -10,10 +10,19 @@ export const AGE_GROUPS = [
   'Aktive',
 ];
 
+// Wofür ist die Übung im Training gedacht?
+export const AREAS = [
+  'Erwärmung',
+  'Erlernen neuer Techniken',
+  'Festigung der Fähigkeiten',
+  'Anwendung im Spiel',
+  'Athletik & Kondition',
+  'Abschluss & Cool-down',
+];
+
+// Inhaltlicher Schwerpunkt
 export const GOALS = [
-  'Aufwärmen',
   'Koordination',
-  'Athletik',
   'Ballgewöhnung',
   'Passen & Fangen',
   'Wurf',
