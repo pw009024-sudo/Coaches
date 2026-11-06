@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { api, getName, saveLogin } from './api';
+import { api, getName, saveLogin } from './client.js';
 import CourtMark from './CourtMark';
 
 export default function Login({ onLoggedIn }) {

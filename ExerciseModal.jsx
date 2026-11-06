@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { api } from './api';
+import { api } from './client.js';
 import { AGE_GROUPS, GOALS, METHODS, PHASES } from './config';
 import TagPicker from './TagPicker';
 

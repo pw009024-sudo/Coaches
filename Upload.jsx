@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { api, getName } from './api';
+import { api, getName } from './client.js';
 import { processPdf } from './pdf';
 import { AGE_GROUPS, GOALS, METHODS } from './config';
 import TagPicker from './TagPicker';

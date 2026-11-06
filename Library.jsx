@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { AGE_GROUPS, GOALS, METHODS } from './config';
-import { imageUrl } from './api';
+import { imageUrl } from './client.js';
 import TagPicker from './TagPicker';
 import ExerciseModal from './ExerciseModal';
 

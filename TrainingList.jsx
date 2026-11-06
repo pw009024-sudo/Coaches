@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { api } from './api';
+import { api } from './client.js';
 
 const sortKey = (t) => t.training_date || t.updated_at || '';
 

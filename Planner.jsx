@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { api, getName, imageUrl } from './api';
+import { api, getName, imageUrl } from './client.js';
 import { AGE_GROUPS, emptyDraft } from './config';
 
 export default function Planner({ draft, setDraft, exercises, onGoLibrary }) {

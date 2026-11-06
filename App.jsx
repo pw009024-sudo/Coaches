@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { api, getToken, getName, logout } from './api';
+import { api, getToken, getName, logout } from './client.js';
 import { emptyDraft } from './config';
 import Login from './Login';
 import Library from './Library';
