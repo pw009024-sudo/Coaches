@@ -9,7 +9,7 @@ Technik: React + Vite (Oberfläche), Supabase (Login, Datenbank, Bildspeicher), 
 ## 1. Supabase einrichten (ca. 10 Minuten)
 
 1. Auf https://supabase.com kostenlos registrieren und ein neues Projekt anlegen. Als Region am besten „Central EU (Frankfurt)“ wählen.
-2. Links **SQL Editor** öffnen, den kompletten Inhalt von `supabase/schema.sql` einfügen und auf **Run** klicken. Damit entstehen die Tabellen, die Zugriffsregeln und der Bildspeicher.
+2. Links **SQL Editor** öffnen, den kompletten Inhalt von `schema.sql` einfügen und auf **Run** klicken. Damit entstehen die Tabellen, die Zugriffsregeln und der Bildspeicher.
 3. **Authentication → Sign In / Providers**: „Allow new users to sign up“ ausschalten. So kann sich niemand Fremdes selbst registrieren.
 4. **Authentication → Users → Add user → Create new user**: Für jeden Trainer E-Mail und Passwort eintragen und „Auto Confirm User“ anhaken. Die Zugangsdaten gibst du den Trainern weiter.
 5. **Project Settings → API** (bzw. „API Keys“): Notiere dir die **Project URL** und den **anon**- bzw. **publishable**-Key. Dieser Schlüssel darf im Browser stehen, die Daten schützen die Zugriffsregeln aus Schritt 2. Den „service_role“/„secret“-Key niemals verwenden oder hochladen.
@@ -17,7 +17,7 @@ Technik: React + Vite (Oberfläche), Supabase (Login, Datenbank, Bildspeicher), 
 ## 2. Code auf GitHub
 
 1. Auf GitHub ein neues Repository anlegen (z. B. `coaches`, gerne „Private“).
-2. Alle Dateien aus diesem Ordner hochladen, entweder per „Add file → Upload files“ im Browser oder mit GitHub Desktop. Der Ordner `node_modules` und eine eventuelle `.env`-Datei gehören nicht dazu.
+2. Alle Dateien aus diesem Ordner hochladen, entweder per „Add file → Upload files“ im Browser oder mit GitHub Desktop. Alle Dateien liegen direkt im Hauptverzeichnis, Unterordner gibt es nicht. Eine eventuelle `.env`-Datei gehört nicht dazu.
 
 ## 3. Veröffentlichen mit Netlify
 
@@ -44,12 +44,12 @@ npm run dev
 
 ## Anpassen
 
-- Altersklassen, Ziele und Methoden stehen in `src/config.js`.
-- Farben und Schriften stehen am Anfang von `src/styles.css`.
+- Altersklassen, Ziele und Methoden stehen in `config.js`.
+- Farben und Schriften stehen am Anfang von `styles.css`.
 
 ## App aufs Handy legen
 
-Die Seite im Browser öffnen, dann auf dem iPhone in Safari „Teilen → Zum Home-Bildschirm“, auf Android in Chrome „⋮ → Zum Startbildschirm hinzufügen“. Coaches erscheint dann mit dem schwarzen Pfeil-Symbol wie eine normale App. Das Symbol liegt als `public/icon.svg` vor, die PNG-Varianten daneben.
+Die Seite im Browser öffnen, dann auf dem iPhone in Safari „Teilen → Zum Home-Bildschirm“, auf Android in Chrome „⋮ → Zum Startbildschirm hinzufügen“. Coaches erscheint dann mit dem schwarzen Pfeil-Symbol wie eine normale App. Das Symbol liegt als `icon.svg` vor, die PNG-Varianten daneben.
 
 ## Gut zu wissen
 

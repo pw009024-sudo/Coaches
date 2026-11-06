@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import { supabase } from '../lib/supabase';
-import { AGE_GROUPS, emptyDraft } from '../config';
-import { useSignedUrls } from '../lib/useSignedUrls';
+import { supabase } from './supabase';
+import { AGE_GROUPS, emptyDraft } from './config';
+import { useSignedUrls } from './useSignedUrls';
 
 export default function Planner({ draft, setDraft, exercises, onGoLibrary }) {
   const [status, setStatus] = useState('');

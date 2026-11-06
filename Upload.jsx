@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
-import { supabase } from '../lib/supabase';
-import { processPdf } from '../lib/pdf';
-import { AGE_GROUPS, GOALS, METHODS, BUCKET } from '../config';
+import { supabase } from './supabase';
+import { processPdf } from './pdf';
+import { AGE_GROUPS, GOALS, METHODS, BUCKET } from './config';
 import TagPicker from './TagPicker';
 
 const emptyTags = { age_groups: [], goals: [], methods: [] };

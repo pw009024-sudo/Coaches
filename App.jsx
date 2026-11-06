@@ -1,12 +1,12 @@
 import { useCallback, useEffect, useState } from 'react';
-import { supabase, supabaseConfigured } from './lib/supabase';
+import { supabase, supabaseConfigured } from './supabase';
 import { emptyDraft } from './config';
-import Login from './components/Login';
-import Library from './components/Library';
-import Upload from './components/Upload';
-import Planner from './components/Planner';
-import TrainingList from './components/TrainingList';
-import CourtMark from './components/CourtMark';
+import Login from './Login';
+import Library from './Library';
+import Upload from './Upload';
+import Planner from './Planner';
+import TrainingList from './TrainingList';
+import CourtMark from './CourtMark';
 
 const TABS = [
   { id: 'library', label: 'Übungen' },

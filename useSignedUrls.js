@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { supabase } from './supabase';
-import { BUCKET } from '../config';
+import { BUCKET } from './config';
 
 // Die Bilder liegen privat. Für die Anzeige holen wir zeitlich begrenzte Links
 // und merken sie uns, damit nicht bei jedem Klick neu geladen wird.

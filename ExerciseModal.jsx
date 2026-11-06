@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
-import { supabase } from '../lib/supabase';
-import { AGE_GROUPS, GOALS, METHODS, PHASES, BUCKET } from '../config';
+import { supabase } from './supabase';
+import { AGE_GROUPS, GOALS, METHODS, PHASES, BUCKET } from './config';
 import TagPicker from './TagPicker';
 
 export default function ExerciseModal({ exercise, imageUrl, canDelete, onClose, onChanged, onAdd }) {

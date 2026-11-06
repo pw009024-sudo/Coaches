@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
-import { AGE_GROUPS, GOALS, METHODS } from '../config';
-import { useSignedUrls } from '../lib/useSignedUrls';
+import { AGE_GROUPS, GOALS, METHODS } from './config';
+import { useSignedUrls } from './useSignedUrls';
 import TagPicker from './TagPicker';
 import ExerciseModal from './ExerciseModal';
 
