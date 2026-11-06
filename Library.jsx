@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { AGE_GROUPS, GOALS, METHODS } from './config';
-import { imageUrl } from './client.js';
+import { imageUrl, isMine, isShared } from './client.js';
 import TagPicker from './TagPicker';
 import ExerciseModal from './ExerciseModal';
 
@@ -11,6 +11,7 @@ export default function Library({ exercises, onChanged, onAdd, onGoUpload }) {
   const [age, setAge] = useState([]);
   const [goal, setGoal] = useState([]);
   const [method, setMethod] = useState([]);
+  const [scope, setScope] = useState('all');
   const [showFilters, setShowFilters] = useState(false);
   const [openId, setOpenId] = useState(null);
 
@@ -18,6 +19,7 @@ export default function Library({ exercises, onChanged, onAdd, onGoUpload }) {
     const needle = q.trim().toLowerCase();
     return exercises.filter(
       (e) =>
+        (scope === 'all' || (scope === 'shared' ? isShared(e) : isMine(e))) &&
         matches(age, e.age_groups) &&
         matches(goal, e.goals) &&
         matches(method, e.methods) &&
@@ -26,7 +28,7 @@ export default function Library({ exercises, onChanged, onAdd, onGoUpload }) {
           e.description.toLowerCase().includes(needle) ||
           (e.source_name || '').toLowerCase().includes(needle))
     );
-  }, [exercises, q, age, goal, method]);
+  }, [exercises, q, age, goal, method, scope]);
 
   const open = exercises.find((e) => e.id === openId);
   const activeFilters = age.length + goal.length + method.length;
@@ -56,6 +58,12 @@ export default function Library({ exercises, onChanged, onAdd, onGoUpload }) {
         </button>
       </div>
 
+      <div className="segmented scope" role="group" aria-label="Bereich">
+        <button aria-pressed={scope === 'all'} className={scope === 'all' ? 'on' : ''} onClick={() => setScope('all')}>Alle</button>
+        <button aria-pressed={scope === 'shared'} className={scope === 'shared' ? 'on' : ''} onClick={() => setScope('shared')}>Gemeinsam</button>
+        <button aria-pressed={scope === 'mine'} className={scope === 'mine' ? 'on' : ''} onClick={() => setScope('mine')}>Von mir</button>
+      </div>
+
       {showFilters && (
         <div className="panel filters">
           <TagPicker label="Altersklasse" options={AGE_GROUPS} value={age} onChange={setAge} />
@@ -79,6 +87,7 @@ export default function Library({ exercises, onChanged, onAdd, onGoUpload }) {
             <li key={e.id}>
               <button className="ex-card" onClick={() => setOpenId(e.id)}>
                 <div className="thumb">
+                  {!isShared(e) && <span className="private-tag">Privat</span>}
                   <img src={imageUrl(e.id)} alt="" loading="lazy" />
                 </div>
                 <span className="ex-title">{e.title}</span>

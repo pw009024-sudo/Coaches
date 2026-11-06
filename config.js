@@ -45,6 +45,8 @@ export function emptyDraft() {
     age_group: '',
     training_date: '',
     notes: '',
+    shared: false,
+    owner_id: null,
     blocks: PHASES.map((phase) => ({ phase, items: [] })),
   };
 }

@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
-import { api, getName } from './client.js';
+import { api } from './client.js';
 import { processPdf } from './pdf';
 import { AGE_GROUPS, GOALS, METHODS } from './config';
 import TagPicker from './TagPicker';
+import VisibilityToggle from './VisibilityToggle';
 
 const emptyTags = { age_groups: [], goals: [], methods: [] };
 
@@ -13,6 +14,7 @@ export default function Upload({ onSaved }) {
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
   const [batch, setBatch] = useState(emptyTags);
+  const [shared, setShared] = useState(true);
   const inputRef = useRef(null);
   const pagesRef = useRef(pages);
   pagesRef.current = pages;
@@ -95,7 +97,7 @@ export default function Upload({ onSaved }) {
             duration_min: p.duration_min ? Number(p.duration_min) : null,
             source_name: p.sourceName,
             page_number: p.pageNumber,
-            created_by: getName(),
+            shared,
           },
         });
         setPages((prev) => prev.filter((x) => x.key !== p.key));
@@ -147,6 +149,11 @@ export default function Upload({ onSaved }) {
             <TagPicker label="Ziel" options={GOALS} value={batch.goals} onChange={(v) => setBatch({ ...batch, goals: v })} />
             <TagPicker label="Methode" options={METHODS} value={batch.methods} onChange={(v) => setBatch({ ...batch, methods: v })} />
             <button className="btn" onClick={applyBatch}>Auf ausgewählte Seiten übernehmen</button>
+          </div>
+
+          <div className="panel">
+            <VisibilityToggle label="Diese Übungen sind sichtbar für" shared={shared} onChange={setShared} />
+            <p className="muted small">{shared ? 'Alle Trainer finden die Übungen im gemeinsamen Bereich.' : 'Nur du siehst diese Übungen. Du kannst sie später jederzeit freigeben.'}</p>
           </div>
 
           <div className="savebar">

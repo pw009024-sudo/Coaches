@@ -6,23 +6,17 @@ Alles läuft nur mit GitHub und Netlify. Die Daten liegen in Netlify Blobs, dem 
 
 ## Aufbau
 
-Fast alle Dateien liegen direkt im Hauptverzeichnis. Die einzige Ausnahme ist der Server-Teil:
+Alle Dateien liegen direkt im Hauptverzeichnis. Der Server-Teil steht in `server.mjs`; Netlify kopiert ihn beim Build automatisch an die richtige Stelle.
 
-```
-netlify/functions/api.mjs
-```
+## Konten und Bereiche
 
-Diesen Ordnerpfad verlangt Netlify. Am einfachsten legst du die Datei auf GitHub über „Add file → Create new file“ an, gibst als Namen `netlify/functions/api.mjs` ein (die Schrägstriche erzeugen die Ordner automatisch) und fügst den Inhalt ein.
+Beim allerersten Aufruf legst du ein **Teampasswort** fest und erstellst dein eigenes Konto. Weitere Trainer wählen „Neu registrieren“, geben das Teampasswort ein und legen ihren Namen und ein persönliches Passwort fest. Danach melden sich alle nur noch mit Namen und persönlichem Passwort an.
 
-## Erster Start
-
-1. Nach dem Deploy die App öffnen.
-2. Beim allerersten Aufruf fragt Coaches nach einem **Teampasswort**. Das legst du einmal fest.
-3. Alle Trainer melden sich danach mit ihrem Namen und diesem Teampasswort an. Der Name erscheint bei hochgeladenen Übungen und gespeicherten Trainings.
+Jede Übung und jedes Training ist entweder **gemeinsam** (alle Trainer sehen es) oder **privat** (nur du). Beim Hochladen und beim Speichern eines Trainings wählst du das aus und kannst es später jederzeit ändern. Gemeinsame Einträge dürfen alle bearbeiten, löschen und privat stellen darf sie nur, wer sie angelegt hat.
 
 ## Teampasswort zurücksetzen
 
-In Netlify unter „Blobs“ den Speicher „coaches“ öffnen und den Eintrag `meta/auth` löschen. Beim nächsten Aufruf kann ein neues Passwort festgelegt werden. Übungen und Trainings bleiben erhalten.
+In Netlify unter „Blobs“ den Speicher „coaches“ öffnen und den Eintrag `meta/auth` löschen. Beim nächsten Aufruf wird das Team neu eingerichtet. Achtung: Danach müssen sich alle neu registrieren; Übungen und Trainings bleiben erhalten.
 
 ## App aufs Handy legen
 
@@ -41,5 +35,4 @@ Der Server-Teil läuft nur über die Netlify CLI: `npm install`, dann `npx netli
 ## Gut zu wissen
 
 - Eingescannte PDFs funktionieren auch: Das Bild der Seite wird gespeichert, nur die Volltextsuche findet darin nichts. Trage dann einen aussagekräftigen Titel ein.
-- Alle angemeldeten Trainer dürfen Übungen und Trainings bearbeiten und löschen.
 - Übungsblätter aus gekauften Büchern oder Verbandsmaterial nur im Rahmen der jeweiligen Nutzungsrechte im Team teilen.

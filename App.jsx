@@ -102,6 +102,8 @@ export default function App() {
                 age_group: t.age_group || '',
                 training_date: t.training_date || '',
                 notes: t.notes || '',
+                shared: t.shared !== false,
+                owner_id: t.owner_id || null,
                 blocks: t.blocks,
               });
               setTab('planner');

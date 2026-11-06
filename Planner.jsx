@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { api, getName, imageUrl } from './client.js';
+import { api, imageUrl, getUser } from './client.js';
+import VisibilityToggle from './VisibilityToggle';
 import { AGE_GROUPS, emptyDraft } from './config';
 
 export default function Planner({ draft, setDraft, exercises, onGoLibrary }) {
@@ -12,6 +13,7 @@ export default function Planner({ draft, setDraft, exercises, onGoLibrary }) {
   const total = allItems.reduce((s, i) => s + (Number(i.minutes) || 0), 0);
 
   const set = (patch) => setDraft((d) => ({ ...d, ...patch }));
+  const canChangeVisibility = !draft.id || !draft.owner_id || draft.owner_id === getUser()?.id;
 
   const updateItem = (bi, ii, patch) =>
     setDraft((d) => ({
@@ -50,19 +52,20 @@ export default function Planner({ draft, setDraft, exercises, onGoLibrary }) {
       training_date: draft.training_date || null,
       notes: draft.notes,
       blocks: draft.blocks,
+      shared: asCopy ? false : draft.shared,
     };
     let data;
     try {
       data =
         draft.id && !asCopy
           ? await api(`trainings/${draft.id}`, { method: 'PUT', body: payload })
-          : await api('trainings', { method: 'POST', body: { ...payload, created_by: getName() } });
+          : await api('trainings', { method: 'POST', body: payload });
     } catch (e) {
       setBusy(false);
       return setError('Speichern fehlgeschlagen: ' + e.message);
     }
     setBusy(false);
-    setDraft((d) => ({ ...d, id: data.id, title: data.title }));
+    setDraft((d) => ({ ...d, id: data.id, title: data.title, shared: data.shared !== false, owner_id: data.owner_id }));
     setStatus(asCopy ? 'Als neues Training gespeichert.' : 'Training gespeichert.');
     setTimeout(() => setStatus(''), 3000);
   };
@@ -91,6 +94,14 @@ export default function Planner({ draft, setDraft, exercises, onGoLibrary }) {
               {AGE_GROUPS.map((a) => <option key={a}>{a}</option>)}
             </select>
           </label>
+          {canChangeVisibility && (
+            <div className="full">
+              <VisibilityToggle label="Training sichtbar für" shared={draft.shared} onChange={(v) => set({ shared: v })} />
+            </div>
+          )}
+          {!canChangeVisibility && (
+            <p className="full muted small">Gemeinsames Training eines anderen Trainers. Änderungen sehen alle. Für eine eigene Version nutze „Als neues Training speichern“.</p>
+          )}
           <label className="full">
             Notizen
             <textarea rows="2" value={draft.notes} placeholder="Schwerpunkt, Material, Hallenzeit …" onChange={(e) => set({ notes: e.target.value })} />

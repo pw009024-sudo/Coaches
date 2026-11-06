@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { api } from './client.js';
+import { api, isMine, isShared, canDelete } from './client.js';
 import { AGE_GROUPS, GOALS, METHODS, PHASES } from './config';
 import TagPicker from './TagPicker';
 
@@ -18,6 +18,17 @@ export default function ExerciseModal({ exercise, imageUrl, onClose, onChanged, 
   }, []);
 
   useEffect(() => setForm(exercise), [exercise]);
+
+  const setVisibility = async (shared) => {
+    setBusy(true);
+    try {
+      await api(`exercises/${exercise.id}`, { method: 'PUT', body: { shared } });
+      onChanged();
+    } catch (e) {
+      setError('Ändern fehlgeschlagen: ' + e.message);
+    }
+    setBusy(false);
+  };
 
   const save = async () => {
     setBusy(true);
@@ -80,6 +91,7 @@ export default function ExerciseModal({ exercise, imageUrl, onClose, onChanged, 
                 {exercise.methods.length > 0 && (<><dt>Methode</dt><dd>{exercise.methods.join(', ')}</dd></>)}
                 {exercise.source_name && (<><dt>Quelle</dt><dd>{exercise.source_name}, Seite {exercise.page_number}</dd></>)}
                 {exercise.created_by && (<><dt>Hochgeladen von</dt><dd>{exercise.created_by}</dd></>)}
+                <dt>Sichtbar für</dt><dd>{isShared(exercise) ? 'Alle Trainer' : 'Nur mich (privat)'}</dd>
               </dl>
 
               <div className="add-box">
@@ -92,9 +104,14 @@ export default function ExerciseModal({ exercise, imageUrl, onClose, onChanged, 
                 {added && <p className="ok" role="status">Im {added} des aktuellen Trainings eingefügt.</p>}
               </div>
 
-              <div className="row">
+              <div className="row wrap">
                 <button className="btn ghost" onClick={() => setEditing(true)}>Bearbeiten</button>
-                <button className="btn danger" onClick={remove} disabled={busy}>Löschen</button>
+                {(isMine(exercise) || !exercise.owner_id) && (
+                  <button className="btn ghost" onClick={() => setVisibility(!isShared(exercise))} disabled={busy}>
+                    {isShared(exercise) ? 'Privat machen' : 'Für alle freigeben'}
+                  </button>
+                )}
+                {canDelete(exercise) && <button className="btn danger" onClick={remove} disabled={busy}>Löschen</button>}
               </div>
             </>
           ) : (
