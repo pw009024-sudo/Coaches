@@ -1,5 +1,6 @@
 [build]
-  command = "npm run build"
+  # Kopiert den Server-Teil an den Ort, den Netlify erwartet, und baut dann die App.
+  command = "mkdir -p netlify/functions && cp server.mjs netlify/functions/api.mjs && npm run build"
   publish = "dist"
 
 [build.environment]
