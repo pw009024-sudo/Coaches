@@ -1,5 +1,6 @@
-import * as pdfjsLib from 'pdfjs-dist';
-import workerUrl from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
+// „legacy“-Fassung: läuft auch auf älteren iPhones, iPads und Android-Geräten
+import * as pdfjsLib from 'pdfjs-dist/legacy/build/pdf.mjs';
+import workerUrl from 'pdfjs-dist/legacy/build/pdf.worker.min.mjs?url';
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = workerUrl;
 
@@ -25,7 +26,8 @@ export async function processPdf(file, onProgress) {
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     await page.render({ canvasContext: ctx, viewport }).promise;
 
-    const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/webp', 0.82));
+    const blob = await canvasToImage(canvas);
+    canvas.width = canvas.height = 0; // Speicher auf dem Handy sofort freigeben
     const text = await extractText(page);
 
     pages.push({
@@ -39,6 +41,15 @@ export async function processPdf(file, onProgress) {
   }
   await pdf.destroy();
   return pages;
+}
+
+// WebP ist am kleinsten. Safari kann kein WebP erzeugen, dann nehmen wir JPEG.
+async function canvasToImage(canvas) {
+  const toBlob = (type, quality) => new Promise((resolve) => canvas.toBlob(resolve, type, quality));
+  let blob = await toBlob('image/webp', 0.82);
+  if (!blob || blob.type !== 'image/webp') blob = await toBlob('image/jpeg', 0.85);
+  if (!blob) throw new Error('Die Seite konnte nicht in ein Bild umgewandelt werden.');
+  return blob;
 }
 
 async function extractText(page) {

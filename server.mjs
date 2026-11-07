@@ -68,6 +68,8 @@ export default async (req) => {
     if (resource === 'setup' && method === 'POST') {
       const { teamPassword, name, password } = await req.json();
       if (!teamPassword || teamPassword.length < 6) return json({ error: 'Das Teampasswort braucht mindestens 6 Zeichen.' }, 400);
+      if (!name || name.trim().length < 2) return json({ error: 'Bitte gib deinen Namen ein.' }, 400);
+      if (!password || password.length < 6) return json({ error: 'Dein Passwort braucht mindestens 6 Zeichen.' }, 400);
       const record = { ...newPassword(teamPassword), secret: randomBytes(32).toString('hex') };
       const result = await store.setJSON('meta/auth', record, { onlyIfNew: true });
       if (!result.modified) return json({ error: 'Das Team ist bereits eingerichtet. Bitte registriere dich.' }, 409);
@@ -104,18 +106,23 @@ export default async (req) => {
       if (method === 'GET') {
         const ex = await store.get(`ex/${id}`, { type: 'json' });
         if (ex && !canSee(ex, user)) return new Response('Kein Zugriff', { status: 403 });
-        const data = await store.get(key, { type: 'arrayBuffer' });
-        if (!data) return new Response('Nicht gefunden', { status: 404 });
-        return new Response(data, {
-          headers: { 'content-type': 'image/webp', 'cache-control': 'private, max-age=31536000, immutable' },
+        const result = await store.getWithMetadata(key, { type: 'arrayBuffer' });
+        if (!result) return new Response('Nicht gefunden', { status: 404 });
+        return new Response(result.data, {
+          headers: {
+            'content-type': result.metadata?.type || 'image/webp',
+            'cache-control': 'private, max-age=31536000, immutable',
+          },
         });
       }
       if (method === 'PUT') {
         const ex = await store.get(`ex/${id}`, { type: 'json' });
         if (ex) return json({ error: 'Bild existiert bereits.' }, 409);
         const data = await req.arrayBuffer();
-        if (data.byteLength > 5_000_000) return json({ error: 'Bild ist zu groß (max. 5 MB).' }, 413);
-        await store.set(key, data);
+        if (data.byteLength > 5_500_000) return json({ error: 'Bild ist zu groß.' }, 413);
+        const type = req.headers.get('content-type') || 'image/webp';
+        if (!/^image\/(webp|jpeg|png)$/.test(type)) return json({ error: 'Unbekanntes Bildformat.' }, 415);
+        await store.set(key, data, { metadata: { type } });
         return json({ ok: true });
       }
     }

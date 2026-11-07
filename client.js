@@ -23,7 +23,7 @@ export async function api(path, { method = 'GET', body, image } = {}) {
   let payload;
   if (image) {
     payload = image;
-    headers['Content-Type'] = 'image/webp';
+    headers['Content-Type'] = image.type || 'image/jpeg';
   } else if (body !== undefined) {
     payload = JSON.stringify(body);
     headers['Content-Type'] = 'application/json';

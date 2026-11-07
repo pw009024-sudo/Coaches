@@ -25,6 +25,7 @@ export default function Upload({ onSaved }) {
 
   const handleFiles = async (fileList) => {
     const files = [...fileList].filter((f) => f.type === 'application/pdf' || /\.pdf$/i.test(f.name));
+    setStatus(files.length ? 'PDF wird geöffnet …' : '');
     if (files.length === 0) {
       setError('Bitte nur PDF-Dateien ablegen.');
       return;
@@ -48,7 +49,8 @@ export default function Upload({ onSaved }) {
           })),
         ]);
       } catch (e) {
-        setError(`${file.name} konnte nicht gelesen werden: ${e.message}`);
+        setError(`${file.name} konnte nicht gelesen werden: ${e?.message || e}`);
+        console.error(e);
       }
     }
     setStatus('');
@@ -131,12 +133,12 @@ export default function Upload({ onSaved }) {
         tabIndex={0}
         onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && inputRef.current?.click()}
       >
-        <strong>PDF hier ablegen</strong>
-        <span>oder klicken, um Dateien auszuwählen. Jede Seite wird zu einer Übung.</span>
+        <strong>PDF auswählen</strong>
+        <span>Hier tippen oder klicken, am Computer auch per Drag and Drop. Jede Seite wird zu einer Übung.</span>
         <input
           ref={inputRef}
           type="file"
-          accept="application/pdf"
+          accept="application/pdf,.pdf"
           multiple
           hidden
           onChange={(e) => { handleFiles(e.target.files); e.target.value = ''; }}
