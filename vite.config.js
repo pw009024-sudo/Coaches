@@ -11,6 +11,7 @@ const STATIC_FILES = [
   'apple-touch-icon.png',
   'favicon-32.png',
   'manifest.webmanifest',
+  'sw.js',
 ];
 
 const copyStatic = {

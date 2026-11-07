@@ -8,3 +8,10 @@ createRoot(document.getElementById('root')).render(
     <App />
   </React.StrictMode>
 );
+
+// Service Worker anmelden, damit sich Coaches als App installieren lässt
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js').catch(() => {});
+  });
+}

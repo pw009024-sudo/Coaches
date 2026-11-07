@@ -304,3 +304,16 @@ label.check input { width: auto; }
 .list-section { margin-bottom: 2rem; }
 .list-section h2 { border-bottom: 2px solid var(--court); padding-bottom: .3rem; }
 .players-field { margin-bottom: .9rem; }
+
+/* App installieren */
+.account { align-items: center; flex-wrap: wrap; }
+.install-btn {
+  font: 600 .85rem var(--body); padding: .3rem .75rem; border-radius: 99px;
+  border: 1px solid var(--line); background: var(--line); color: #18212f; cursor: pointer;
+}
+.ios-help {
+  position: fixed; left: 1rem; right: 1rem; bottom: calc(1rem + env(safe-area-inset-bottom, 0px)); z-index: 50;
+  background: #000; color: #fff; border-radius: var(--radius-m); padding: 1rem 1.1rem;
+  box-shadow: 0 8px 30px rgb(0 0 0 / .35); font-size: .95rem;
+}
+.ios-help p { margin-bottom: .5rem; }

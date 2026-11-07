@@ -7,6 +7,7 @@ import Upload from './Upload';
 import Planner from './Planner';
 import TrainingList from './TrainingList';
 import CourtMark from './CourtMark';
+import InstallButton from './InstallButton';
 
 const TABS = [
   { id: 'library', label: 'Übungen' },
@@ -63,6 +64,7 @@ export default function App() {
         <div className="topbar-inner">
           <h1 className="brand"><img src="/icon.svg" alt="" className="brand-icon" />Coaches</h1>
           <div className="account">
+            <InstallButton />
             <span>{getName()}</span>
             <button className="link-btn" onClick={logout}>Abmelden</button>
           </div>
