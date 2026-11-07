@@ -329,7 +329,7 @@ label.check input { width: auto; }
   --exdd-gradient: linear-gradient(215deg, #4a8be8 0%, #2f6bd0 32%, #1f4fa8 64%, #163a7d 100%);
   position: relative; flex-shrink: 0; width: 64px; height: 64px;
 }
-.exdd.open { filter: drop-shadow(0 16px 28px rgb(15 35 80 / .35)); }
+.exdd.open { z-index: 30; filter: drop-shadow(0 16px 28px rgb(15 35 80 / .35)); }
 .exdd-trigger {
   position: relative; z-index: 2;
   width: 64px; height: 64px; border-radius: 50%; border: 0; padding: 0; cursor: pointer;
@@ -352,13 +352,14 @@ label.check input { width: auto; }
   display: flex; flex-direction: column;
   background: var(--exdd-gradient);
   border-radius: 24px; /* bis der genaue Umriss berechnet ist */
+  padding-top: 74px;
   transform-origin: calc(100% - 32px) 32px;
   animation: exdd-in .22s ease-out;
 }
 @keyframes exdd-in { from { opacity: 0; transform: scale(.55); } }
 
 .exdd-list {
-  list-style: none; margin: 0; padding: 74px 16px 18px;
+  list-style: none; margin: 0; padding: 0 16px 18px;
   overflow-y: auto; overscroll-behavior: contain;
   display: grid; gap: .6rem;
 }
@@ -376,3 +377,18 @@ label.check input { width: auto; }
 .exdd-name { min-width: 0; overflow-wrap: anywhere; }
 .exdd-empty { color: #fff; padding: .5rem .25rem; }
 @media (max-width: 520px) { .exdd-hint { display: none; } }
+
+/* Kopfbereich im Dropdown (Suche, Umschalter) */
+.exdd-head { padding: 0 16px 12px; display: grid; gap: .55rem; }
+.exdd-search {
+  width: 100%; border: 0; border-radius: 99px; padding: .6rem 1.1rem;
+  background: #fff; color: #14284f; font: 400 1rem var(--body);
+}
+.exdd-search::placeholder { color: #5c6f93; }
+.exdd-check { display: flex; align-items: center; gap: .5rem; color: #fff; font-weight: 600; font-size: .9rem; }
+.exdd-check input { width: 1.1rem; height: 1.1rem; accent-color: #fff; }
+
+/* Phasen-Überschrift mit Plus-Knopf */
+.phase-head { display: flex; justify-content: space-between; align-items: center; gap: 1rem; border-bottom: 2px solid var(--court); padding-bottom: .4rem; margin-bottom: .75rem; }
+.phase-head h2 { border: 0; padding: 0; margin: 0; }
+.exdd-badge.plus { font-size: 2rem; font-family: var(--body); font-weight: 400; padding-bottom: .15rem; }

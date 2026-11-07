@@ -1,9 +1,59 @@
-import { useState } from 'react';
-import { api, imageUrl, getUser } from './client.js';
+import { useMemo, useState } from 'react';
+import { api, imageUrl, getUser, isShared } from './client.js';
+import ExerciseDropdown from './ExerciseDropdown';
 import VisibilityToggle from './VisibilityToggle';
-import { AGE_GROUPS, emptyDraft } from './config';
+import { AGE_GROUPS, PHASE_AREAS, emptyDraft } from './config';
 
-export default function Planner({ draft, setDraft, exercises, onGoLibrary }) {
+// Plus-Knopf je Phase: öffnet das Dropdown mit Übungen, die zu Phase und Altersklasse passen
+function PhasePicker({ phase, ageGroup, exercises, onPick }) {
+  const [q, setQ] = useState('');
+  const [onlyMatching, setOnlyMatching] = useState(true);
+
+  const list = useMemo(() => {
+    const areas = PHASE_AREAS[phase] || [];
+    const needle = q.trim().toLowerCase();
+    return exercises
+      .filter((e) => {
+        if (needle && !e.title.toLowerCase().includes(needle) && !(e.description || '').toLowerCase().includes(needle)) return false;
+        if (!onlyMatching) return true;
+        const exAreas = e.areas || [];
+        const areaOk = exAreas.length === 0 || exAreas.some((a) => areas.includes(a));
+        const ageOk = !ageGroup || (e.age_groups || []).length === 0 || e.age_groups.includes(ageGroup);
+        return areaOk && ageOk;
+      })
+      .sort((a, b) => a.title.localeCompare(b.title, 'de'));
+  }, [exercises, phase, ageGroup, q, onlyMatching]);
+
+  return (
+    <ExerciseDropdown
+      exercises={list}
+      badge={<span aria-hidden="true">+</span>}
+      ariaLabel={`Übung zu „${phase}“ hinzufügen`}
+      isPrivate={(e) => !isShared(e)}
+      onSelect={(e) => { onPick(e); setQ(''); }}
+      emptyText={onlyMatching ? 'Keine passende Übung. Entferne den Haken, um alle zu sehen.' : 'Keine Übung gefunden.'}
+      header={
+        <>
+          <input
+            className="exdd-search"
+            type="search"
+            placeholder="Übung suchen"
+            aria-label="Übung suchen"
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+          />
+          <label className="exdd-check">
+            <input type="checkbox" checked={onlyMatching} onChange={(e) => setOnlyMatching(e.target.checked)} />
+            Nur passend zu {phase}{ageGroup ? ` und ${ageGroup}` : ''}
+          </label>
+        </>
+      }
+    />
+  );
+}
+
+
+export default function Planner({ draft, setDraft, exercises }) {
   const [status, setStatus] = useState('');
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
@@ -34,6 +84,14 @@ export default function Planner({ draft, setDraft, exercises, onGoLibrary }) {
         [items[ii], items[target]] = [items[target], items[ii]];
         return { ...b, items };
       }),
+    }));
+
+  const addItem = (bi, ex) =>
+    setDraft((d) => ({
+      ...d,
+      blocks: d.blocks.map((b, i) =>
+        i !== bi ? b : { ...b, items: [...b.items, { exerciseId: ex.id, minutes: ex.duration_min || 10, note: '' }] }
+      ),
     }));
 
   const removeItem = (bi, ii) =>
@@ -117,10 +175,18 @@ export default function Planner({ draft, setDraft, exercises, onGoLibrary }) {
           const sum = block.items.reduce((s, i) => s + (Number(i.minutes) || 0), 0);
           return (
             <div key={block.phase} className="phase">
-              <h2>{block.phase} <span className="muted">{sum} Min.</span></h2>
+              <div className="phase-head">
+                <h2>{block.phase} <span className="muted">{sum} Min.</span></h2>
+                <PhasePicker
+                  phase={block.phase}
+                  ageGroup={draft.age_group}
+                  exercises={exercises}
+                  onPick={(ex) => addItem(bi, ex)}
+                />
+              </div>
               {block.items.length === 0 ? (
                 <p className="empty-inline">
-                  Noch leer. <button className="link-btn" onClick={onGoLibrary}>Übung aus der Liste wählen</button>
+                  Noch leer. Tippe auf das Plus, um eine Übung auszuwählen.
                 </p>
               ) : (
                 <ol className="plan-items">

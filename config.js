@@ -46,6 +46,13 @@ export const METHODS = [
 
 export const PHASES = ['Aufwärmen', 'Hauptteil', 'Abschluss'];
 
+// Welche Bereiche passen zu welcher Phase der Trainingsplanung?
+export const PHASE_AREAS = {
+  Aufwärmen: ['Erwärmung'],
+  Hauptteil: ['Erlernen neuer Techniken', 'Festigung der Fähigkeiten', 'Anwendung im Spiel', 'Athletik & Kondition'],
+  Abschluss: ['Abschluss & Cool-down', 'Anwendung im Spiel'],
+};
+
 
 export function emptyDraft() {
   return {
