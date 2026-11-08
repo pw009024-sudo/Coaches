@@ -1,11 +1,12 @@
 import { useMemo, useState } from 'react';
 import { api, imageUrl, getUser, isShared } from './client.js';
 import ExerciseDropdown from './ExerciseDropdown';
+import ExerciseModal from './ExerciseModal';
 import VisibilityToggle from './VisibilityToggle';
 import { AGE_GROUPS, PHASE_AREAS, emptyDraft } from './config';
 
 // Plus-Knopf je Phase: öffnet das Dropdown mit Übungen, die zu Phase und Altersklasse passen
-function PhasePicker({ phase, ageGroup, exercises, onPick }) {
+function PhasePicker({ phase, ageGroup, exercises, onPick, onPreview }) {
   const [q, setQ] = useState('');
   const [onlyMatching, setOnlyMatching] = useState(true);
 
@@ -31,6 +32,8 @@ function PhasePicker({ phase, ageGroup, exercises, onPick }) {
       ariaLabel={`Übung zu „${phase}“ hinzufügen`}
       isPrivate={(e) => !isShared(e)}
       onSelect={(e) => { onPick(e); setQ(''); }}
+      onOpen={onPreview}
+      selectHint={`Zu „${phase}“ hinzufügen`}
       emptyText={onlyMatching ? 'Keine passende Übung. Entferne den Haken, um alle zu sehen.' : 'Keine Übung gefunden.'}
       header={
         <>
@@ -53,7 +56,8 @@ function PhasePicker({ phase, ageGroup, exercises, onPick }) {
 }
 
 
-export default function Planner({ draft, setDraft, exercises }) {
+export default function Planner({ draft, setDraft, exercises, onChanged }) {
+  const [previewId, setPreviewId] = useState(null);
   const [status, setStatus] = useState('');
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
@@ -182,6 +186,7 @@ export default function Planner({ draft, setDraft, exercises }) {
                   ageGroup={draft.age_group}
                   exercises={exercises}
                   onPick={(ex) => addItem(bi, ex)}
+                  onPreview={(ex) => setPreviewId(ex.id)}
                 />
               </div>
               {block.items.length === 0 ? (
@@ -234,6 +239,16 @@ export default function Planner({ draft, setDraft, exercises }) {
           <button className="btn ghost" onClick={reset}>Neues Training</button>
         </div>
       </section>
+
+      {byId[previewId] && (
+        <ExerciseModal
+          exercise={byId[previewId]}
+          imageUrl={imageUrl(previewId)}
+          onClose={() => setPreviewId(null)}
+          onChanged={onChanged}
+          onAdd={(ex, phase) => addItem(draft.blocks.findIndex((b) => b.phase === phase), ex)}
+        />
+      )}
 
       {/* Nur beim Drucken sichtbar */}
       <article className="print-sheet">

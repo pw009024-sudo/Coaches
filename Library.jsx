@@ -3,6 +3,7 @@ import { AREAS, AGE_GROUPS, GOALS, METHODS } from './config';
 import { imageUrl, isMine, isShared } from './client.js';
 import TagPicker from './TagPicker';
 import ExerciseModal from './ExerciseModal';
+import ExerciseDropdown from './ExerciseDropdown';
 
 const matches = (selected, values = []) => selected.length === 0 || selected.some((s) => values.includes(s));
 
@@ -86,28 +87,19 @@ export default function Library({ exercises, onChanged, onAdd, onGoUpload }) {
         </div>
       )}
 
-      <p className="muted count">{filtered.length} von {exercises.length} Übungen</p>
-
-      {filtered.length === 0 ? (
-        <p className="empty-inline">Keine Übung passt zu Suche und Filtern. Entferne einen Filter, um mehr zu sehen.</p>
-      ) : (
-        <ul className="grid">
-          {filtered.map((e) => (
-            <li key={e.id}>
-              <button className="ex-card" onClick={() => setOpenId(e.id)}>
-                <div className="thumb">
-                  {!isShared(e) && <span className="private-tag">Privat</span>}
-                  <img src={imageUrl(e.id)} alt="" loading="lazy" />
-                </div>
-                <span className="ex-title">{e.title}</span>
-                <span className="ex-meta">
-                  {[(e.areas || [])[0], e.age_groups[0], e.min_players && `ab ${e.min_players} Spielern`, e.duration_min && `${e.duration_min} Min.`].filter(Boolean).join(', ')}
-                </span>
-              </button>
-            </li>
-          ))}
-        </ul>
-      )}
+      <div className="exdd-row">
+        <p className="muted count">
+          {filtered.length === exercises.length
+            ? `${exercises.length} Übungen`
+            : `${filtered.length} von ${exercises.length} Übungen`}
+          <span className="exdd-hint"> · Tippe auf den Kreis, um sie anzuzeigen, und auf den Pfeil für Details</span>
+        </p>
+        <ExerciseDropdown
+          exercises={filtered}
+          isPrivate={(e) => !isShared(e)}
+          onOpen={(e) => setOpenId(e.id)}
+        />
+      </div>
 
       {open && (
         <ExerciseModal

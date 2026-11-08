@@ -93,7 +93,7 @@ export default function App() {
           <Upload onSaved={async () => { await loadExercises(); setTab('library'); }} />
         )}
         {tab === 'planner' && (
-          <Planner draft={draft} setDraft={setDraft} exercises={exercises} />
+          <Planner draft={draft} setDraft={setDraft} exercises={exercises} onChanged={loadExercises} />
         )}
         {tab === 'trainings' && (
           <TrainingList

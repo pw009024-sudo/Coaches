@@ -31,6 +31,11 @@ const ArrowIcon = () => (
     <path d="M20 9l-5.2 3.3.6-6.2z" fill="currentColor" stroke="currentColor" strokeWidth="1.2" strokeLinejoin="round" />
   </svg>
 );
+const ChevronIcon = () => (
+  <svg viewBox="0 0 24 24" aria-hidden="true">
+    <path d="M9.5 6l6 6-6 6" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+);
 const LockIcon = () => (
   <svg viewBox="0 0 24 24" aria-hidden="true">
     <rect x="5" y="10.5" width="14" height="10" rx="2" fill="currentColor" />
@@ -38,11 +43,15 @@ const LockIcon = () => (
   </svg>
 );
 
+// Jede Zeile zeigt nur den Namen. Der kleine Pfeil am Ende (onOpen) öffnet die große Ansicht.
+// onSelect (optional): Tipp auf den Namen löst eine Aktion aus, z. B. „zum Training hinzufügen“.
 // badge: Inhalt des runden Knopfs (Standard: Anzahl), header: optionaler Bereich über der Liste (z. B. Suche)
 export default function ExerciseDropdown({
   exercises,
   isPrivate,
   onSelect,
+  onOpen,
+  selectHint,
   badge,
   ariaLabel,
   header,
@@ -97,13 +106,27 @@ export default function ExerciseDropdown({
             {exercises.length === 0 && <li className="exdd-empty">{emptyText}</li>}
             {exercises.map((e) => (
               <li key={e.id}>
-                <button
-                  className="exdd-item"
-                  onClick={() => { onSelect(e); setOpen(false); }}
-                >
+                <div className="exdd-item">
                   <span className="exdd-icon">{isPrivate(e) ? <LockIcon /> : <ArrowIcon />}</span>
-                  <span className="exdd-name">{e.title}</span>
-                </button>
+                  {onSelect ? (
+                    <button
+                      className="exdd-name exdd-name-btn"
+                      title={selectHint}
+                      onClick={() => { onSelect(e); setOpen(false); }}
+                    >
+                      {e.title}
+                    </button>
+                  ) : (
+                    <span className="exdd-name">{e.title}</span>
+                  )}
+                  <button
+                    className="exdd-more"
+                    aria-label={`Details zu „${e.title}“ anzeigen`}
+                    onClick={() => { onOpen(e); setOpen(false); }}
+                  >
+                    <ChevronIcon />
+                  </button>
+                </div>
               </li>
             ))}
           </ul>
