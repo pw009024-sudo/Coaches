@@ -325,8 +325,10 @@ label.check input { width: auto; }
   margin: .25rem 0 1rem;
 }
 .exdd-row .count { margin: 0; }
-.exdd {
+.exdd, .exlist {
   --exdd-gradient: linear-gradient(215deg, #4a8be8 0%, #2f6bd0 32%, #1f4fa8 64%, #163a7d 100%);
+}
+.exdd {
   position: relative; flex-shrink: 0; width: 64px; height: 64px;
 }
 .exdd.open { z-index: 30; filter: drop-shadow(0 16px 28px rgb(15 35 80 / .35)); }
@@ -406,3 +408,12 @@ label.check input { width: auto; }
 .phase-head h2 { border: 0; padding: 0; margin: 0; }
 .exdd-badge.plus { padding: 0; }
 .plus-icon { width: 22px; height: 22px; display: block; }
+
+/* Übungsliste in derselben Optik wie die Dropdowns */
+.exlist {
+  background: var(--exdd-gradient);
+  border-radius: 24px;
+  padding: 16px 0 0;
+  box-shadow: 0 14px 28px rgb(15 35 80 / .22);
+}
+.exlist .exdd-list { overflow: visible; }

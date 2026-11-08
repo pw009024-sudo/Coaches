@@ -3,7 +3,7 @@ import { AREAS, AGE_GROUPS, GOALS, METHODS } from './config';
 import { imageUrl, isMine, isShared } from './client.js';
 import TagPicker from './TagPicker';
 import ExerciseModal from './ExerciseModal';
-import ExerciseDropdown from './ExerciseDropdown';
+import { ExerciseList } from './ExerciseDropdown';
 
 const matches = (selected, values = []) => selected.length === 0 || selected.some((s) => values.includes(s));
 
@@ -87,19 +87,18 @@ export default function Library({ exercises, onChanged, onAdd, onGoUpload }) {
         </div>
       )}
 
-      <div className="exdd-row">
-        <p className="muted count">
-          {filtered.length === exercises.length
-            ? `${exercises.length} Übungen`
-            : `${filtered.length} von ${exercises.length} Übungen`}
-          <span className="exdd-hint"> · Tippe auf den Kreis, um sie anzuzeigen, und auf den Pfeil für Details</span>
-        </p>
-        <ExerciseDropdown
-          exercises={filtered}
-          isPrivate={(e) => !isShared(e)}
-          onOpen={(e) => setOpenId(e.id)}
-        />
-      </div>
+      <p className="muted count">
+        {filtered.length === exercises.length
+          ? `${exercises.length} Übungen`
+          : `${filtered.length} von ${exercises.length} Übungen`}
+      </p>
+
+      <ExerciseList
+        exercises={filtered}
+        isPrivate={(e) => !isShared(e)}
+        onOpen={(e) => setOpenId(e.id)}
+        emptyText="Keine Übung passt zu Suche und Filtern. Entferne einen Filter, um mehr zu sehen."
+      />
 
       {open && (
         <ExerciseModal

@@ -43,6 +43,41 @@ const LockIcon = () => (
   </svg>
 );
 
+// Eine Zeile: Symbol, Name, kleiner Pfeil für die große Ansicht
+export function ExerciseRow({ exercise: e, isPrivate, onSelect, onOpen, selectHint }) {
+  return (
+    <div className="exdd-item">
+      <span className="exdd-icon">{isPrivate(e) ? <LockIcon /> : <ArrowIcon />}</span>
+      {onSelect ? (
+        <button className="exdd-name exdd-name-btn" title={selectHint} onClick={() => onSelect(e)}>
+          {e.title}
+        </button>
+      ) : (
+        <span className="exdd-name">{e.title}</span>
+      )}
+      <button className="exdd-more" aria-label={`Details zu „${e.title}“ anzeigen`} onClick={() => onOpen(e)}>
+        <ChevronIcon />
+      </button>
+    </div>
+  );
+}
+
+// Dieselbe Optik als feste Liste (kein Dropdown)
+export function ExerciseList({ exercises, isPrivate, onOpen, emptyText }) {
+  return (
+    <div className="exlist">
+      <ul className="exdd-list">
+        {exercises.length === 0 && <li className="exdd-empty">{emptyText}</li>}
+        {exercises.map((e) => (
+          <li key={e.id}>
+            <ExerciseRow exercise={e} isPrivate={isPrivate} onOpen={onOpen} />
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
 // Jede Zeile zeigt nur den Namen. Der kleine Pfeil am Ende (onOpen) öffnet die große Ansicht.
 // onSelect (optional): Tipp auf den Namen löst eine Aktion aus, z. B. „zum Training hinzufügen“.
 // badge: Inhalt des runden Knopfs (Standard: Anzahl), header: optionaler Bereich über der Liste (z. B. Suche)
@@ -106,27 +141,13 @@ export default function ExerciseDropdown({
             {exercises.length === 0 && <li className="exdd-empty">{emptyText}</li>}
             {exercises.map((e) => (
               <li key={e.id}>
-                <div className="exdd-item">
-                  <span className="exdd-icon">{isPrivate(e) ? <LockIcon /> : <ArrowIcon />}</span>
-                  {onSelect ? (
-                    <button
-                      className="exdd-name exdd-name-btn"
-                      title={selectHint}
-                      onClick={() => { onSelect(e); setOpen(false); }}
-                    >
-                      {e.title}
-                    </button>
-                  ) : (
-                    <span className="exdd-name">{e.title}</span>
-                  )}
-                  <button
-                    className="exdd-more"
-                    aria-label={`Details zu „${e.title}“ anzeigen`}
-                    onClick={() => { onOpen(e); setOpen(false); }}
-                  >
-                    <ChevronIcon />
-                  </button>
-                </div>
+                <ExerciseRow
+                  exercise={e}
+                  isPrivate={isPrivate}
+                  onSelect={onSelect && ((x) => { onSelect(x); setOpen(false); })}
+                  onOpen={(x) => { onOpen(x); setOpen(false); }}
+                  selectHint={selectHint}
+                />
               </li>
             ))}
           </ul>
