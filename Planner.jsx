@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { api, imageUrl, getUser, isShared } from './client.js';
 import ExerciseDropdown from './ExerciseDropdown';
 import ExerciseModal from './ExerciseModal';
+import PrintChoice from './PrintChoice';
 import VisibilityToggle from './VisibilityToggle';
 import { AGE_GROUPS, PHASE_AREAS, emptyDraft } from './config';
 
@@ -58,6 +59,8 @@ function PhasePicker({ phase, ageGroup, exercises, onPick, onPreview }) {
 
 export default function Planner({ draft, setDraft, exercises, onChanged }) {
   const [previewId, setPreviewId] = useState(null);
+  const [printChoice, setPrintChoice] = useState(false);
+  const [withImages, setWithImages] = useState(true);
   const [status, setStatus] = useState('');
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
@@ -247,7 +250,7 @@ export default function Planner({ draft, setDraft, exercises, onChanged }) {
         <div className="row wrap actions">
           <button className="btn primary" onClick={() => save(false)} disabled={busy}>Training speichern</button>
           {draft.id && <button className="btn" onClick={() => save(true)} disabled={busy}>Als neues Training speichern</button>}
-          <button className="btn" onClick={() => window.print()} disabled={allItems.length === 0}>Drucken</button>
+          <button className="btn" onClick={() => setPrintChoice(true)} disabled={allItems.length === 0}>Drucken</button>
           <button className="btn ghost" onClick={reset}>Neues Training</button>
         </div>
       </section>
@@ -263,7 +266,18 @@ export default function Planner({ draft, setDraft, exercises, onChanged }) {
       )}
 
       {/* Nur beim Drucken sichtbar */}
-      <article className="print-sheet">
+      {printChoice && (
+        <PrintChoice
+          onClose={() => setPrintChoice(false)}
+          onChoose={(images) => {
+            setWithImages(images);
+            setPrintChoice(false);
+            setTimeout(() => window.print(), 100);
+          }}
+        />
+      )}
+
+      <article className={withImages ? 'print-sheet' : 'print-sheet no-images'}>
         {printPages.map((pg, pi) => (
           <section key={pi} className="print-page">
             <header className="print-head">
@@ -288,7 +302,7 @@ export default function Planner({ draft, setDraft, exercises, onChanged }) {
                 const ex = byId[it.exerciseId];
                 return (
                   <div key={i} className="print-item">
-                    <div className="print-img">{ex && <img src={imageUrl(ex.id)} alt="" />}</div>
+                    {withImages && <div className="print-img">{ex && <img src={imageUrl(ex.id)} alt="" />}</div>}
                     <div className="print-text">
                       <h3>{ex?.title || 'Übung wurde gelöscht'}</h3>
                       <p className="print-facts">

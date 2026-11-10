@@ -302,6 +302,7 @@ label.check input { width: auto; }
   .print-facts { margin: 0 0 1.5mm; color: #333; font-weight: 600; }
   .print-note { margin: 0 0 1.5mm; }
   .print-desc { margin: 0; white-space: pre-line; }
+  .no-images .print-item { grid-template-columns: 1fr; }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -466,3 +467,19 @@ label.check input { width: auto; }
   box-shadow: 0 0 0 9999px rgb(10 20 40 / .45); pointer-events: none;
 }
 .crop-stage { overflow: hidden; }
+
+/* Auswahl vor dem Drucken */
+.print-choice { width: min(460px, 94vw); }
+.print-choice-body { padding: 1.5rem; display: grid; gap: .9rem; }
+.print-choice-body h2, .print-choice-body p { margin: 0; }
+.print-options { display: grid; grid-template-columns: 1fr 1fr; gap: .75rem; }
+.print-option {
+  display: grid; justify-items: center; gap: .35rem; text-align: center;
+  padding: 1rem .75rem; border-radius: var(--radius-m); cursor: pointer;
+  border: 2px solid var(--border); background: var(--surface); color: var(--ink); font: inherit;
+}
+.print-option:hover { border-color: var(--court); }
+.print-option svg { width: 64px; height: 48px; fill: none; stroke: var(--court); stroke-width: 2.4; stroke-linecap: round; }
+.print-option rect { fill: rgb(31 79 168 / .15); }
+.print-option strong { font-family: var(--display); font-size: 1.25rem; }
+.print-option span { font-size: .85rem; color: var(--muted); }
