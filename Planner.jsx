@@ -67,6 +67,18 @@ export default function Planner({ draft, setDraft, exercises, onChanged }) {
   const total = allItems.reduce((s, i) => s + (Number(i.minutes) || 0), 0);
 
   const set = (patch) => setDraft((d) => ({ ...d, ...patch }));
+
+  // Druck: jede Phase beginnt auf einer neuen Seite, je Seite 3 Übungen
+  const printPages = draft.blocks
+    .filter((b) => b.items.length)
+    .flatMap((b) => {
+      const phaseMinutes = b.items.reduce((sum, i) => sum + (Number(i.minutes) || 0), 0);
+      const pages = [];
+      for (let i = 0; i < b.items.length; i += 3) {
+        pages.push({ phase: b.phase, phaseMinutes, part: i / 3 + 1, items: b.items.slice(i, i + 3) });
+      }
+      return pages;
+    });
   const canChangeVisibility = !draft.id || !draft.owner_id || draft.owner_id === getUser()?.id;
 
   const updateItem = (bi, ii, patch) =>
@@ -252,26 +264,43 @@ export default function Planner({ draft, setDraft, exercises, onChanged }) {
 
       {/* Nur beim Drucken sichtbar */}
       <article className="print-sheet">
-        <h1>{draft.title || 'Training'}</h1>
-        <p>
-          {[draft.training_date && new Date(draft.training_date).toLocaleDateString('de-DE'), draft.age_group, `${total} Minuten`]
-            .filter(Boolean).join(', ')}
-        </p>
-        {draft.notes && <p className="print-notes">{draft.notes}</p>}
-        {draft.blocks.filter((b) => b.items.length).map((b) => (
-          <section key={b.phase}>
-            <h2>{b.phase}</h2>
-            {b.items.map((it, i) => {
-              const ex = byId[it.exerciseId];
-              return (
-                <div key={i} className="print-item">
-                  <h3>{ex?.title} ({[`${it.minutes} Min.`, ex?.min_players && `ab ${ex.min_players} Spielern`].filter(Boolean).join(', ')})</h3>
-                  {it.note && <p><strong>Hinweis:</strong> {it.note}</p>}
-                  {ex?.description && <p className="print-desc">{ex.description}</p>}
-                  {ex && <img src={imageUrl(ex.id)} alt="" />}
-                </div>
-              );
-            })}
+        {printPages.map((pg, pi) => (
+          <section key={pi} className="print-page">
+            <header className="print-head">
+              <div>
+                <h2>
+                  {pg.phase}
+                  {pg.part > 1 && <span className="print-cont"> (Fortsetzung)</span>}
+                </h2>
+                <span>{pg.phaseMinutes} Minuten</span>
+              </div>
+              <div className="print-meta">
+                <strong>{draft.title || 'Training'}</strong>
+                <span>
+                  {[draft.training_date && new Date(draft.training_date).toLocaleDateString('de-DE'), draft.age_group, `gesamt ${total} Min.`]
+                    .filter(Boolean).join(' · ')}
+                </span>
+              </div>
+            </header>
+            {pi === 0 && draft.notes && <p className="print-notes">{draft.notes}</p>}
+            <div className="print-slots">
+              {pg.items.map((it, i) => {
+                const ex = byId[it.exerciseId];
+                return (
+                  <div key={i} className="print-item">
+                    <div className="print-img">{ex && <img src={imageUrl(ex.id)} alt="" />}</div>
+                    <div className="print-text">
+                      <h3>{ex?.title || 'Übung wurde gelöscht'}</h3>
+                      <p className="print-facts">
+                        {[`${it.minutes} Min.`, ex?.min_players && `ab ${ex.min_players} Spielern`].filter(Boolean).join(' · ')}
+                      </p>
+                      {it.note && <p className="print-note"><strong>Hinweis:</strong> {it.note}</p>}
+                      {ex?.description && <p className="print-desc">{ex.description}</p>}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
           </section>
         ))}
       </article>

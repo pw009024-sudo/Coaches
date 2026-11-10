@@ -263,16 +263,45 @@ label.check input { width: auto; }
 
 /* Druckansicht */
 .print-sheet { display: none; }
+@page { size: A4; margin: 12mm; }
 @media print {
   :root { color-scheme: light; }
-  body { background: #fff; color: #000; }
-  .no-print, .topbar { display: none !important; }
+  html, body { background: #fff; color: #000; height: auto; }
+  :root { padding: 0 !important; }
+  .no-print, .topbar, .modal { display: none !important; }
   .content { padding: 0; max-width: none; }
-  .print-sheet { display: block; font-size: 11pt; }
-  .print-sheet h1 { font-size: 22pt; }
-  .print-sheet h2 { font-size: 15pt; border-bottom: 2px solid #000; margin-top: 14pt; }
-  .print-item { break-inside: avoid; margin-bottom: 12pt; }
-  .print-item img { max-height: 15cm; width: auto; border: 1px solid #999; }
+  .print-sheet { display: block; font-size: 9.5pt; line-height: 1.35; }
+
+  /* Eine Druckseite: Kopf + 3 gleich große Übungsplätze */
+  .print-page {
+    height: 270mm; display: flex; flex-direction: column;
+    break-after: page; page-break-after: always; overflow: hidden;
+  }
+  .print-page:last-child { break-after: auto; page-break-after: auto; }
+  .print-head {
+    display: flex; justify-content: space-between; align-items: flex-end; gap: 8mm;
+    border-bottom: 2px solid #000; padding-bottom: 2mm; margin-bottom: 3mm;
+  }
+  .print-head h2 { font-size: 16pt; margin: 0; }
+  .print-cont { font-size: 11pt; font-weight: 400; }
+  .print-meta { display: grid; text-align: right; font-size: 9pt; }
+  .print-notes { margin: 0 0 3mm; font-size: 9pt; white-space: pre-line; }
+
+  .print-slots { flex: 1; min-height: 0; display: grid; grid-template-rows: repeat(3, 1fr); }
+  .print-item {
+    min-height: 0; overflow: hidden;
+    display: grid; grid-template-columns: 46% 1fr; gap: 5mm;
+    padding: 3mm 0; border-bottom: 1px solid #999;
+    break-inside: avoid;
+  }
+  .print-item:last-child { border-bottom: 0; }
+  .print-img { min-height: 0; height: 100%; display: flex; align-items: flex-start; justify-content: center; }
+  .print-img img { max-width: 100%; max-height: 100%; width: auto; height: auto; object-fit: contain; border: 1px solid #bbb; }
+  .print-text { min-height: 0; overflow: hidden; }
+  .print-text h3 { font-size: 11.5pt; margin: 0 0 1mm; }
+  .print-facts { margin: 0 0 1.5mm; color: #333; font-weight: 600; }
+  .print-note { margin: 0 0 1.5mm; }
+  .print-desc { margin: 0; white-space: pre-line; }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -418,3 +447,22 @@ label.check input { width: auto; }
   box-shadow: 0 14px 28px rgb(15 35 80 / .22);
 }
 .exlist .exdd-list { overflow: visible; }
+
+/* Grafik und Text beim Hochladen */
+.page-graphic { display: grid; gap: .5rem; align-content: start; justify-items: start; }
+.page-graphic img { width: 100%; }
+.ex-text p { white-space: pre-line; margin: 0; line-height: 1.55; }
+
+/* Ausschnitt wählen */
+.crop-modal { width: min(760px, 96vw); }
+.crop-body { padding: 1.25rem; display: grid; gap: .9rem; max-height: 94vh; overflow: auto; }
+.crop-stage {
+  position: relative; justify-self: center; touch-action: none; user-select: none; cursor: crosshair;
+  max-width: 100%;
+}
+.crop-stage img { max-height: 62vh; width: auto; max-width: 100%; border: 1px solid var(--border); background: #fff; }
+.crop-rect {
+  position: absolute; border: 3px solid var(--court); background: rgb(31 79 168 / .12);
+  box-shadow: 0 0 0 9999px rgb(10 20 40 / .45); pointer-events: none;
+}
+.crop-stage { overflow: hidden; }
