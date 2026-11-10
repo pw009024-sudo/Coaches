@@ -100,6 +100,13 @@ export default function ExerciseModal({ exercise, imageUrl, onClose, onChanged, 
                 <dt>Sichtbar für</dt><dd>{isShared(exercise) ? 'Alle Trainer' : 'Nur mich (privat)'}</dd>
               </dl>
 
+              {exercise.description && (
+                <div className="ex-text">
+                  <h3>Beschreibung</h3>
+                  <p>{exercise.description}</p>
+                </div>
+              )}
+
               <div className="add-box">
                 <h3>Zum Training hinzufügen</h3>
                 <div className="row wrap">
@@ -133,8 +140,8 @@ export default function ExerciseModal({ exercise, imageUrl, onClose, onChanged, 
               <TagPicker compact label="Altersklasse" options={AGE_GROUPS} value={form.age_groups} onChange={(v) => setForm({ ...form, age_groups: v })} />
               <TagPicker compact label="Schwerpunkt" options={GOALS} value={form.goals} onChange={(v) => setForm({ ...form, goals: v })} />
               <TagPicker compact label="Methode" options={METHODS} value={form.methods} onChange={(v) => setForm({ ...form, methods: v })} />
-              <label>Text der Seite (für die Suche)
-                <textarea rows="6" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
+              <label>Beschreibung
+                <textarea rows="10" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
               </label>
               <div className="row">
                 <button className="btn ghost" onClick={() => { setForm(withDefaults(exercise)); setEditing(false); }}>Abbrechen</button>

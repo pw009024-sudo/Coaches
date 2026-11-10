@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
 import { api } from './client.js';
-import { processPdf } from './pdf';
+import { processPdf, cropBlob } from './pdf';
 import { AREAS, AGE_GROUPS, GOALS, METHODS } from './config';
 import TagPicker from './TagPicker';
 import VisibilityToggle from './VisibilityToggle';
+import CropEditor from './CropEditor';
 
 const emptyTags = { areas: [], age_groups: [], goals: [], methods: [] };
 
@@ -16,12 +17,14 @@ export default function Upload({ onSaved }) {
   const [batch, setBatch] = useState(emptyTags);
   const [shared, setShared] = useState(true);
   const [batchPlayers, setBatchPlayers] = useState('');
+  const [cropKey, setCropKey] = useState(null);
   const inputRef = useRef(null);
   const pagesRef = useRef(pages);
   pagesRef.current = pages;
 
   // Vorschaubilder beim Verlassen der Seite freigeben
-  useEffect(() => () => pagesRef.current.forEach((p) => URL.revokeObjectURL(p.previewUrl)), []);
+  const revoke = (p) => { URL.revokeObjectURL(p.previewUrl); URL.revokeObjectURL(p.fullUrl); };
+  useEffect(() => () => pagesRef.current.forEach(revoke), []);
 
   const handleFiles = async (fileList) => {
     const files = [...fileList].filter((f) => f.type === 'application/pdf' || /\.pdf$/i.test(f.name));
@@ -76,8 +79,22 @@ export default function Upload({ onSaved }) {
     );
 
   const clearAll = () => {
-    pages.forEach((p) => URL.revokeObjectURL(p.previewUrl));
+    pages.forEach(revoke);
     setPages([]);
+  };
+
+  const cropPage = pages.find((p) => p.key === cropKey);
+
+  const applyCrop = async (crop) => {
+    const p = cropPage;
+    setCropKey(null);
+    try {
+      const blob = await cropBlob(p.fullBlob, crop);
+      URL.revokeObjectURL(p.previewUrl);
+      update(p.key, { crop, blob, previewUrl: URL.createObjectURL(blob) });
+    } catch (e) {
+      setError('Ausschnitt konnte nicht erstellt werden: ' + e.message);
+    }
   };
 
   const selected = pages.filter((p) => p.include);
@@ -109,7 +126,7 @@ export default function Upload({ onSaved }) {
           },
         });
         setPages((prev) => prev.filter((x) => x.key !== p.key));
-        URL.revokeObjectURL(p.previewUrl);
+        revoke(p);
       }
       clearAll();
       setStatus('');
@@ -182,7 +199,11 @@ export default function Upload({ onSaved }) {
           <ul className="page-list">
             {pages.map((p) => (
               <li key={p.key} className={p.include ? 'page-card' : 'page-card excluded'}>
-                <img src={p.previewUrl} alt={`Seite ${p.pageNumber} aus ${p.sourceName}`} />
+                <div className="page-graphic">
+                  <img src={p.previewUrl} alt={`Grafik von Seite ${p.pageNumber} aus ${p.sourceName}`} />
+                  <span className="muted small">{p.crop ? 'Grafik automatisch ausgeschnitten' : 'Ganze Seite'}</span>
+                  <button className="btn ghost" onClick={() => setCropKey(p.key)}>Ausschnitt ändern</button>
+                </div>
                 <div className="page-fields">
                   <label className="check">
                     <input type="checkbox" checked={p.include} onChange={(e) => update(p.key, { include: e.target.checked })} />
@@ -202,6 +223,10 @@ export default function Upload({ onSaved }) {
                       <input type="number" min="1" max="180" value={p.duration_min} onChange={(e) => update(p.key, { duration_min: e.target.value })} />
                     </label>
                   </div>
+                  <label>
+                    Text der Übung (aus der PDF, bei Bedarf anpassen)
+                    <textarea rows="6" value={p.text} onChange={(e) => update(p.key, { text: e.target.value })} />
+                  </label>
                   <TagPicker compact label="Bereich im Training" options={AREAS} value={p.areas} onChange={(v) => update(p.key, { areas: v })} />
                   <TagPicker compact label="Altersklasse" options={AGE_GROUPS} value={p.age_groups} onChange={(v) => update(p.key, { age_groups: v })} />
                   <TagPicker compact label="Schwerpunkt" options={GOALS} value={p.goals} onChange={(v) => update(p.key, { goals: v })} />
@@ -211,6 +236,17 @@ export default function Upload({ onSaved }) {
             ))}
           </ul>
         </>
+      )}
+
+      {cropPage && (
+        <CropEditor
+          src={cropPage.fullUrl}
+          width={cropPage.width}
+          height={cropPage.height}
+          initial={cropPage.crop}
+          onClose={() => setCropKey(null)}
+          onApply={applyCrop}
+        />
       )}
     </section>
   );

@@ -266,7 +266,8 @@ export default function Planner({ draft, setDraft, exercises, onChanged }) {
               return (
                 <div key={i} className="print-item">
                   <h3>{ex?.title} ({[`${it.minutes} Min.`, ex?.min_players && `ab ${ex.min_players} Spielern`].filter(Boolean).join(', ')})</h3>
-                  {it.note && <p>{it.note}</p>}
+                  {it.note && <p><strong>Hinweis:</strong> {it.note}</p>}
+                  {ex?.description && <p className="print-desc">{ex.description}</p>}
                   {ex && <img src={imageUrl(ex.id)} alt="" />}
                 </div>
               );
