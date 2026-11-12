@@ -215,7 +215,7 @@ export default function Planner({ draft, setDraft, exercises, onChanged }) {
                     return (
                       <li key={ii} className="plan-item">
                         <div className="mini-thumb">
-                          {ex && <img src={imageUrl(ex.id)} alt="" />}
+                          {imageUrl(ex) && <img src={imageUrl(ex)} alt="" />}
                         </div>
                         <div className="plan-item-main">
                           <strong>{ex ? ex.title : 'Übung wurde gelöscht'}</strong>
@@ -258,7 +258,7 @@ export default function Planner({ draft, setDraft, exercises, onChanged }) {
       {byId[previewId] && (
         <ExerciseModal
           exercise={byId[previewId]}
-          imageUrl={imageUrl(previewId)}
+          imageUrl={imageUrl(byId[previewId])}
           onClose={() => setPreviewId(null)}
           onChanged={onChanged}
           onAdd={(ex, phase) => addItem(draft.blocks.findIndex((b) => b.phase === phase), ex)}
@@ -301,8 +301,8 @@ export default function Planner({ draft, setDraft, exercises, onChanged }) {
               {pg.items.map((it, i) => {
                 const ex = byId[it.exerciseId];
                 return (
-                  <div key={i} className="print-item">
-                    {withImages && <div className="print-img">{ex && <img src={imageUrl(ex.id)} alt="" />}</div>}
+                  <div key={i} className={withImages && imageUrl(ex) ? 'print-item' : 'print-item text-only'}>
+                    {withImages && imageUrl(ex) && <div className="print-img"><img src={imageUrl(ex)} alt="" /></div>}
                     <div className="print-text">
                       <h3>{ex?.title || 'Übung wurde gelöscht'}</h3>
                       <p className="print-facts">

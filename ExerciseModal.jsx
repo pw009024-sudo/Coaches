@@ -1,13 +1,27 @@
 import { useEffect, useRef, useState } from 'react';
 import { api, isMine, isShared, canDelete } from './client.js';
-import { AREAS, AGE_GROUPS, GOALS, METHODS, PHASES } from './config';
-import TagPicker from './TagPicker';
+import { PHASES } from './config';
+import { prepareImage } from './images';
+import ExerciseFields, { toPayload } from './ExerciseFields';
+import ImagePicker from './ImagePicker';
 
-const withDefaults = (e) => ({ areas: [], min_players: null, ...e });
+const toForm = (e) => ({
+  title: e.title || '',
+  description: e.description || '',
+  areas: e.areas || [],
+  positions: e.positions || [],
+  age_groups: e.age_groups || [],
+  goals: e.goals || [],
+  methods: e.methods || [],
+  min_players: e.min_players ?? '',
+  duration_min: e.duration_min ?? '',
+});
 
 export default function ExerciseModal({ exercise, imageUrl, onClose, onChanged, onAdd }) {
   const [editing, setEditing] = useState(false);
-  const [form, setForm] = useState(withDefaults(exercise));
+  const [form, setForm] = useState(() => toForm(exercise));
+  const [newImage, setNewImage] = useState(null);
+  const [removeImage, setRemoveImage] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [added, setAdded] = useState('');
@@ -19,7 +33,17 @@ export default function ExerciseModal({ exercise, imageUrl, onClose, onChanged, 
     return () => d?.close();
   }, []);
 
-  useEffect(() => setForm(withDefaults(exercise)), [exercise]);
+  useEffect(() => setForm(toForm(exercise)), [exercise]);
+
+  const set = (patch) => setForm((f) => ({ ...f, ...patch }));
+
+  const cancelEdit = () => {
+    setForm(toForm(exercise));
+    setNewImage(null);
+    setRemoveImage(false);
+    setEditing(false);
+    setError('');
+  };
 
   const setVisibility = async (shared) => {
     setBusy(true);
@@ -32,27 +56,41 @@ export default function ExerciseModal({ exercise, imageUrl, onClose, onChanged, 
     setBusy(false);
   };
 
-  const save = async () => {
-    setBusy(true);
+  const chooseImage = async (file) => {
+    setError('');
     try {
-      await api(`exercises/${exercise.id}`, {
-        method: 'PUT',
-        body: {
-          title: form.title,
-          description: form.description,
-          areas: form.areas,
-          min_players: form.min_players ? Number(form.min_players) : null,
-          age_groups: form.age_groups,
-          goals: form.goals,
-          methods: form.methods,
-          duration_min: form.duration_min ? Number(form.duration_min) : null,
-        },
-      });
+      setNewImage(await prepareImage(file));
+      setRemoveImage(false);
+    } catch (e) {
+      setError(e.message);
+    }
+  };
+
+  const save = async () => {
+    if (!form.title.trim()) return setError('Bitte gib der Übung einen Namen.');
+    if (form.areas.includes('Positionstraining') && form.positions.length === 0) {
+      return setError('Wähle beim Positionstraining mindestens eine Position aus.');
+    }
+    setBusy(true);
+    setError('');
+    try {
+      const body = toPayload(form);
+      if (newImage) {
+        await api(`images/${exercise.id}`, { method: 'PUT', image: newImage });
+        body.has_image = true;
+        body.image_version = Date.now();
+      } else if (removeImage) {
+        await api(`images/${exercise.id}`, { method: 'DELETE' });
+        body.has_image = false;
+      }
+      await api(`exercises/${exercise.id}`, { method: 'PUT', body });
     } catch (e) {
       setBusy(false);
       return setError('Speichern fehlgeschlagen: ' + e.message);
     }
     setBusy(false);
+    setNewImage(null);
+    setRemoveImage(false);
     setEditing(false);
     onChanged();
   };
@@ -75,12 +113,27 @@ export default function ExerciseModal({ exercise, imageUrl, onClose, onChanged, 
     setAdded(phase);
   };
 
+  const list = (v) => (v || []).join(', ');
+
   return (
     <dialog ref={dialogRef} className="modal" onClose={onClose} onClick={(e) => e.target === dialogRef.current && onClose()}>
-      <div className="modal-body">
-        <div className="modal-image">
-          <img src={imageUrl} alt={`Übungsblatt: ${exercise.title}`} />
-        </div>
+      <div className={imageUrl || editing ? 'modal-body' : 'modal-body no-image'}>
+        {editing ? (
+          <div className="modal-image modal-image-edit">
+            <ImagePicker
+              file={newImage}
+              currentUrl={removeImage ? '' : imageUrl}
+              onChange={chooseImage}
+              onRemove={() => { setNewImage(null); setRemoveImage(true); }}
+            />
+          </div>
+        ) : (
+          imageUrl && (
+            <div className="modal-image">
+              <img src={imageUrl} alt={`Grafik: ${exercise.title}`} />
+            </div>
+          )
+        )}
 
         <div className="modal-side">
           <button className="close" onClick={onClose} aria-label="Schließen">×</button>
@@ -89,14 +142,14 @@ export default function ExerciseModal({ exercise, imageUrl, onClose, onChanged, 
             <>
               <h2>{exercise.title}</h2>
               <dl className="facts">
-                {exercise.areas?.length > 0 && (<><dt>Bereich</dt><dd>{exercise.areas.join(', ')}</dd></>)}
+                {exercise.areas?.length > 0 && (<><dt>Bereich</dt><dd>{list(exercise.areas)}</dd></>)}
+                {exercise.positions?.length > 0 && (<><dt>Positionen</dt><dd>{list(exercise.positions)}</dd></>)}
                 {exercise.min_players && (<><dt>Spieler</dt><dd>mindestens {exercise.min_players}</dd></>)}
                 {exercise.duration_min && (<><dt>Dauer</dt><dd>{exercise.duration_min} Minuten</dd></>)}
-                {exercise.age_groups.length > 0 && (<><dt>Altersklasse</dt><dd>{exercise.age_groups.join(', ')}</dd></>)}
-                {exercise.goals.length > 0 && (<><dt>Schwerpunkt</dt><dd>{exercise.goals.join(', ')}</dd></>)}
-                {exercise.methods.length > 0 && (<><dt>Methode</dt><dd>{exercise.methods.join(', ')}</dd></>)}
-                {exercise.source_name && (<><dt>Quelle</dt><dd>{exercise.source_name}, Seite {exercise.page_number}</dd></>)}
-                {exercise.created_by && (<><dt>Hochgeladen von</dt><dd>{exercise.created_by}</dd></>)}
+                {exercise.age_groups?.length > 0 && (<><dt>Altersklasse</dt><dd>{list(exercise.age_groups)}</dd></>)}
+                {exercise.goals?.length > 0 && (<><dt>Schwerpunkt</dt><dd>{list(exercise.goals)}</dd></>)}
+                {exercise.methods?.length > 0 && (<><dt>Methode</dt><dd>{list(exercise.methods)}</dd></>)}
+                {exercise.created_by && (<><dt>Angelegt von</dt><dd>{exercise.created_by}</dd></>)}
                 <dt>Sichtbar für</dt><dd>{isShared(exercise) ? 'Alle Trainer' : 'Nur mich (privat)'}</dd>
               </dl>
 
@@ -129,23 +182,11 @@ export default function ExerciseModal({ exercise, imageUrl, onClose, onChanged, 
             </>
           ) : (
             <div className="stack">
-              <label>Titel<input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} /></label>
-              <label className="narrow">Mindestanzahl Spieler
-                <input type="number" min="1" max="40" value={form.min_players ?? ''} onChange={(e) => setForm({ ...form, min_players: e.target.value })} />
-              </label>
-              <label className="narrow">Dauer in Minuten
-                <input type="number" min="1" max="180" value={form.duration_min ?? ''} onChange={(e) => setForm({ ...form, duration_min: e.target.value })} />
-              </label>
-              <TagPicker compact label="Bereich im Training" options={AREAS} value={form.areas} onChange={(v) => setForm({ ...form, areas: v })} />
-              <TagPicker compact label="Altersklasse" options={AGE_GROUPS} value={form.age_groups} onChange={(v) => setForm({ ...form, age_groups: v })} />
-              <TagPicker compact label="Schwerpunkt" options={GOALS} value={form.goals} onChange={(v) => setForm({ ...form, goals: v })} />
-              <TagPicker compact label="Methode" options={METHODS} value={form.methods} onChange={(v) => setForm({ ...form, methods: v })} />
-              <label>Beschreibung
-                <textarea rows="10" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
-              </label>
+              <h2>Übung bearbeiten</h2>
+              <ExerciseFields form={form} set={set} />
               <div className="row">
-                <button className="btn ghost" onClick={() => { setForm(withDefaults(exercise)); setEditing(false); }}>Abbrechen</button>
-                <button className="btn primary" onClick={save} disabled={busy}>Änderungen speichern</button>
+                <button className="btn ghost" onClick={cancelEdit}>Abbrechen</button>
+                <button className="btn primary" onClick={save} disabled={busy}>{busy ? 'Wird gespeichert …' : 'Änderungen speichern'}</button>
               </div>
             </div>
           )}

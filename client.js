@@ -35,4 +35,8 @@ export async function api(path, { method = 'GET', body, image } = {}) {
   return data;
 }
 
-export const imageUrl = (id) => `/api/images/${id}?t=${encodeURIComponent(getToken())}`;
+// Bild-Adresse einer Übung (null, wenn die Übung kein Bild hat)
+export const imageUrl = (ex) =>
+  ex && ex.has_image !== false
+    ? `/api/images/${ex.id}?t=${encodeURIComponent(getToken())}&v=${ex.image_version || 0}`
+    : null;

@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { AREAS, AGE_GROUPS, GOALS, METHODS } from './config';
+import { AREAS, POSITIONS, AGE_GROUPS, GOALS, METHODS } from './config';
 import { imageUrl, isMine, isShared } from './client.js';
 import TagPicker from './TagPicker';
 import ExerciseModal from './ExerciseModal';
@@ -10,6 +10,7 @@ const matches = (selected, values = []) => selected.length === 0 || selected.som
 export default function Library({ exercises, onChanged, onAdd, onGoUpload }) {
   const [q, setQ] = useState('');
   const [area, setArea] = useState([]);
+  const [position, setPosition] = useState([]);
   const [players, setPlayers] = useState('');
   const [age, setAge] = useState([]);
   const [goal, setGoal] = useState([]);
@@ -24,6 +25,7 @@ export default function Library({ exercises, onChanged, onAdd, onGoUpload }) {
       (e) =>
         (scope === 'all' || (scope === 'shared' ? isShared(e) : isMine(e))) &&
         matches(area, e.areas) &&
+        matches(position, e.positions) &&
         (!players || !e.min_players || e.min_players <= Number(players)) &&
         matches(age, e.age_groups) &&
         matches(goal, e.goals) &&
@@ -33,17 +35,17 @@ export default function Library({ exercises, onChanged, onAdd, onGoUpload }) {
           e.description.toLowerCase().includes(needle) ||
           (e.source_name || '').toLowerCase().includes(needle))
     );
-  }, [exercises, q, area, players, age, goal, method, scope]);
+  }, [exercises, q, area, position, players, age, goal, method, scope]);
 
   const open = exercises.find((e) => e.id === openId);
-  const activeFilters = area.length + age.length + goal.length + method.length + (players ? 1 : 0);
+  const activeFilters = area.length + position.length + age.length + goal.length + method.length + (players ? 1 : 0);
 
   if (exercises.length === 0) {
     return (
       <div className="empty">
         <h2>Noch keine Übungen</h2>
-        <p>Lade eine PDF hoch, jede Seite wird zu einer Übung mit Bild.</p>
-        <button className="btn primary" onClick={onGoUpload}>PDF hochladen</button>
+        <p>Lege deine erste Übung an, mit Beschreibung und Grafik.</p>
+        <button className="btn primary" onClick={onGoUpload}>Übung anlegen</button>
       </div>
     );
   }
@@ -72,6 +74,7 @@ export default function Library({ exercises, onChanged, onAdd, onGoUpload }) {
       {showFilters && (
         <div className="panel filters">
           <TagPicker label="Bereich im Training" options={AREAS} value={area} onChange={setArea} />
+          <TagPicker label="Position (Positionstraining)" options={POSITIONS} value={position} onChange={setPosition} />
           <TagPicker label="Altersklasse" options={AGE_GROUPS} value={age} onChange={setAge} />
           <label className="narrow players-field">
             Spieler heute im Training
@@ -80,7 +83,7 @@ export default function Library({ exercises, onChanged, onAdd, onGoUpload }) {
           <TagPicker label="Schwerpunkt" options={GOALS} value={goal} onChange={setGoal} />
           <TagPicker label="Methode" options={METHODS} value={method} onChange={setMethod} />
           {activeFilters > 0 && (
-            <button className="link-btn" onClick={() => { setArea([]); setPlayers(''); setAge([]); setGoal([]); setMethod([]); }}>
+            <button className="link-btn" onClick={() => { setArea([]); setPosition([]); setPlayers(''); setAge([]); setGoal([]); setMethod([]); }}>
               Filter zurücksetzen
             </button>
           )}
@@ -103,7 +106,7 @@ export default function Library({ exercises, onChanged, onAdd, onGoUpload }) {
       {open && (
         <ExerciseModal
           exercise={open}
-          imageUrl={imageUrl(open.id)}
+          imageUrl={imageUrl(open)}
           onClose={() => setOpenId(null)}
           onChanged={onChanged}
           onAdd={onAdd}

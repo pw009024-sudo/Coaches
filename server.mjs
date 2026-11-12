@@ -116,13 +116,20 @@ export default async (req) => {
         });
       }
       if (method === 'PUT') {
+        // Neues Bild oder Bild einer bestehenden Übung ersetzen (wer die Übung sehen darf, darf sie bearbeiten)
         const ex = await store.get(`ex/${id}`, { type: 'json' });
-        if (ex) return json({ error: 'Bild existiert bereits.' }, 409);
+        if (ex && !canSee(ex, user)) return json({ error: 'Kein Zugriff.' }, 403);
         const data = await req.arrayBuffer();
         if (data.byteLength > 5_500_000) return json({ error: 'Bild ist zu groß.' }, 413);
         const type = req.headers.get('content-type') || 'image/webp';
         if (!/^image\/(webp|jpeg|png)$/.test(type)) return json({ error: 'Unbekanntes Bildformat.' }, 415);
         await store.set(key, data, { metadata: { type } });
+        return json({ ok: true });
+      }
+      if (method === 'DELETE') {
+        const ex = await store.get(`ex/${id}`, { type: 'json' });
+        if (ex && !canSee(ex, user)) return json({ error: 'Kein Zugriff.' }, 403);
+        await store.delete(key);
         return json({ ok: true });
       }
     }

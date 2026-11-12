@@ -1,6 +1,6 @@
 # Coaches
 
-Handball-Trainingsplaner für dein Trainerteam. Übungen aus PDFs hinterlegen (eine Seite = eine Übung, mit Bild), nach Altersklasse, Ziel und Methode filtern und daraus Trainings planen.
+Handball-Trainingsplaner für dein Trainerteam. Übungen mit Beschreibung und Grafik (PNG) anlegen, nach Bereich, Position, Altersklasse, Schwerpunkt und Methode filtern und daraus Trainings planen.
 
 Alles läuft nur mit GitHub und Netlify. Die Daten liegen in Netlify Blobs, dem Speicher, der in jedes Netlify-Projekt eingebaut ist. Es gibt keine Datenbank einzurichten und keine Umgebungsvariablen einzutragen.
 
@@ -34,5 +34,4 @@ Der Server-Teil läuft nur über die Netlify CLI: `npm install`, dann `npx netli
 
 ## Gut zu wissen
 
-- Eingescannte PDFs funktionieren auch: Das Bild der Seite wird gespeichert, nur die Volltextsuche findet darin nichts. Trage dann einen aussagekräftigen Titel ein.
 - Übungsblätter aus gekauften Büchern oder Verbandsmaterial nur im Rahmen der jeweiligen Nutzungsrechte im Team teilen.

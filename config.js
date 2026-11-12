@@ -17,7 +17,19 @@ export const AREAS = [
   'Festigung der Fähigkeiten',
   'Anwendung im Spiel',
   'Athletik & Kondition',
+  'Positionstraining',
   'Abschluss & Cool-down',
+];
+
+// Positionen für das Positionstraining
+export const POSITIONS = [
+  'Torwart',
+  'Linksaußen',
+  'Rückraum links',
+  'Rückraum Mitte',
+  'Rückraum rechts',
+  'Rechtsaußen',
+  'Kreisläufer',
 ];
 
 // Inhaltlicher Schwerpunkt
@@ -49,7 +61,7 @@ export const PHASES = ['Aufwärmen', 'Hauptteil', 'Abschluss'];
 // Welche Bereiche passen zu welcher Phase der Trainingsplanung?
 export const PHASE_AREAS = {
   Aufwärmen: ['Erwärmung'],
-  Hauptteil: ['Erlernen neuer Techniken', 'Festigung der Fähigkeiten', 'Anwendung im Spiel', 'Athletik & Kondition'],
+  Hauptteil: ['Erlernen neuer Techniken', 'Festigung der Fähigkeiten', 'Anwendung im Spiel', 'Athletik & Kondition', 'Positionstraining'],
   Abschluss: ['Abschluss & Cool-down', 'Anwendung im Spiel'],
 };
 

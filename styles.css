@@ -302,7 +302,7 @@ label.check input { width: auto; }
   .print-facts { margin: 0 0 1.5mm; color: #333; font-weight: 600; }
   .print-note { margin: 0 0 1.5mm; }
   .print-desc { margin: 0; white-space: pre-line; }
-  .no-images .print-item { grid-template-columns: 1fr; }
+  .no-images .print-item, .print-item.text-only { grid-template-columns: 1fr; }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -483,3 +483,25 @@ label.check input { width: auto; }
 .print-option rect { fill: rgb(31 79 168 / .15); }
 .print-option strong { font-family: var(--display); font-size: 1.25rem; }
 .print-option span { font-size: .85rem; color: var(--muted); }
+
+/* Übung anlegen */
+.create-grid { display: grid; grid-template-columns: minmax(260px, 1fr) 1.4fr; gap: 1rem; align-items: start; }
+.create-grid .panel { margin-bottom: 0; }
+.create > .panel, .create > .error, .create > .ok, .create > .row { margin-top: 1rem; }
+@media (max-width: 760px) { .create-grid { grid-template-columns: 1fr; } }
+
+.image-picker { display: grid; gap: .6rem; }
+.image-drop {
+  display: grid; place-items: center; gap: .25rem; text-align: center; min-height: 220px;
+  padding: 1rem; border: 2px dashed var(--court); border-radius: var(--radius-m);
+  background: var(--bg); cursor: pointer; overflow: hidden;
+}
+.image-drop strong { font-family: var(--display); font-size: 1.4rem; }
+.image-drop span { color: var(--muted); font-size: .92rem; }
+.image-drop.dragging { border-style: solid; background: rgb(31 79 168 / .1); }
+.image-drop img { max-height: 420px; width: auto; max-width: 100%; background: #fff; border-radius: var(--radius-s); }
+
+.position-box { border-left: 4px solid var(--court); padding-left: .9rem; }
+
+.modal-body.no-image { grid-template-columns: 1fr; }
+.modal-image-edit { background: var(--surface); }

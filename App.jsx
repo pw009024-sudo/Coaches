@@ -3,7 +3,7 @@ import { api, getToken, getName, logout } from './client.js';
 import { emptyDraft } from './config';
 import Login from './Login';
 import Library from './Library';
-import Upload from './Upload';
+import CreateExercise from './CreateExercise';
 import Planner from './Planner';
 import TrainingList from './TrainingList';
 import CourtMark from './CourtMark';
@@ -11,7 +11,7 @@ import InstallButton from './InstallButton';
 
 const TABS = [
   { id: 'library', label: 'Übungen' },
-  { id: 'upload', label: 'PDF hochladen' },
+  { id: 'create', label: 'Übung anlegen' },
   { id: 'planner', label: 'Training planen' },
   { id: 'trainings', label: 'Gespeicherte Trainings' },
 ];
@@ -87,11 +87,9 @@ export default function App() {
       <main className="content">
         {loadError && <p className="error no-print">{loadError}</p>}
         {tab === 'library' && (
-          <Library exercises={exercises} onChanged={loadExercises} onAdd={addToDraft} onGoUpload={() => setTab('upload')} />
+          <Library exercises={exercises} onChanged={loadExercises} onAdd={addToDraft} onGoUpload={() => setTab('create')} />
         )}
-        {tab === 'upload' && (
-          <Upload onSaved={async () => { await loadExercises(); setTab('library'); }} />
-        )}
+        {tab === 'create' && <CreateExercise onSaved={loadExercises} />}
         {tab === 'planner' && (
           <Planner draft={draft} setDraft={setDraft} exercises={exercises} onChanged={loadExercises} />
         )}
