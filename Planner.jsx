@@ -4,7 +4,7 @@ import ExerciseDropdown from './ExerciseDropdown';
 import ExerciseModal from './ExerciseModal';
 import PrintChoice from './PrintChoice';
 import VisibilityToggle from './VisibilityToggle';
-import { AGE_GROUPS, PHASE_AREAS, emptyDraft } from './config';
+import { AGE_GROUPS, PHASE_AREAS, emptyDraft, exerciseSections, exerciseSearchText } from './config';
 
 // Plus-Knopf je Phase: öffnet das Dropdown mit Übungen, die zu Phase und Altersklasse passen
 function PhasePicker({ phase, ageGroup, exercises, onPick, onPreview }) {
@@ -16,7 +16,7 @@ function PhasePicker({ phase, ageGroup, exercises, onPick, onPreview }) {
     const needle = q.trim().toLowerCase();
     return exercises
       .filter((e) => {
-        if (needle && !e.title.toLowerCase().includes(needle) && !(e.description || '').toLowerCase().includes(needle)) return false;
+        if (needle && !exerciseSearchText(e).includes(needle)) return false;
         if (!onlyMatching) return true;
         const exAreas = e.areas || [];
         const areaOk = exAreas.length === 0 || exAreas.some((a) => areas.includes(a));
@@ -309,7 +309,9 @@ export default function Planner({ draft, setDraft, exercises, onChanged }) {
                         {[`${it.minutes} Min.`, ex?.min_players && `ab ${ex.min_players} Spielern`].filter(Boolean).join(' · ')}
                       </p>
                       {it.note && <p className="print-note"><strong>Hinweis:</strong> {it.note}</p>}
-                      {ex?.description && <p className="print-desc">{ex.description}</p>}
+                      {exerciseSections(ex).map((sec) => (
+                        <p key={sec.label} className="print-desc"><strong>{sec.label}:</strong> {sec.text}</p>
+                      ))}
                     </div>
                   </div>
                 );

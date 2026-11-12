@@ -1,4 +1,4 @@
-import { AREAS, POSITIONS, AGE_GROUPS, GOALS, METHODS } from './config';
+import { AREAS, POSITIONS, AGE_GROUPS, GOALS, METHODS, SECTIONS } from './config';
 import TagPicker from './TagPicker';
 
 // Alle Eingabefelder einer Übung (beim Anlegen und beim Bearbeiten)
@@ -12,11 +12,12 @@ export default function ExerciseFields({ form, set }) {
         <input required value={form.title} onChange={(e) => set({ title: e.target.value })} placeholder="z. B. Kreuzen im Rückraum" />
       </label>
 
-      <label>
-        Beschreibung
-        <textarea rows="7" value={form.description} onChange={(e) => set({ description: e.target.value })}
-          placeholder="Ablauf, Varianten, Coaching-Punkte, Material …" />
-      </label>
+      {SECTIONS.map((s) => (
+        <label key={s.key}>
+          {s.label}
+          <textarea rows={s.rows} value={form[s.key]} placeholder={s.placeholder} onChange={(e) => set({ [s.key]: e.target.value })} />
+        </label>
+      ))}
 
       <div className="row wrap">
         <label className="narrow">
@@ -49,7 +50,8 @@ export function toPayload(form) {
   const positional = form.areas.includes('Positionstraining');
   return {
     title: form.title.trim(),
-    description: form.description.trim(),
+    ...Object.fromEntries(SECTIONS.map((s) => [s.key, (form[s.key] || '').trim()])),
+    ...Object.fromEntries(SECTIONS.map((s) => [s.key, ''])), // ersetzt durch die einzelnen Felder
     areas: form.areas,
     positions: positional ? form.positions : [],
     age_groups: form.age_groups,

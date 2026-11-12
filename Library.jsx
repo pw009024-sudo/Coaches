@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { AREAS, POSITIONS, AGE_GROUPS, GOALS, METHODS } from './config';
+import { AREAS, POSITIONS, AGE_GROUPS, GOALS, METHODS, exerciseSearchText } from './config';
 import { imageUrl, isMine, isShared } from './client.js';
 import TagPicker from './TagPicker';
 import ExerciseModal from './ExerciseModal';
@@ -31,8 +31,7 @@ export default function Library({ exercises, onChanged, onAdd, onGoUpload }) {
         matches(goal, e.goals) &&
         matches(method, e.methods) &&
         (!needle ||
-          e.title.toLowerCase().includes(needle) ||
-          e.description.toLowerCase().includes(needle) ||
+          exerciseSearchText(e).includes(needle) ||
           (e.source_name || '').toLowerCase().includes(needle))
     );
   }, [exercises, q, area, position, players, age, goal, method, scope]);

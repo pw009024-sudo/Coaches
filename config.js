@@ -78,3 +78,23 @@ export function emptyDraft() {
     blocks: PHASES.map((phase) => ({ phase, items: [] })),
   };
 }
+
+// Textfelder einer Übung (Reihenfolge = Reihenfolge in Formular, Ansicht und Ausdruck)
+export const SECTIONS = [
+  { key: 'setup', label: 'Aufbau', rows: 3, placeholder: 'Spielfeld, Positionen der Spieler, Hütchen …' },
+  { key: 'material', label: 'Material', rows: 2, placeholder: 'z. B. 6 Bälle, 4 Hütchen, Leibchen' },
+  { key: 'procedure', label: 'Ablauf', rows: 6, placeholder: 'Was passiert Schritt für Schritt?' },
+  { key: 'extensions', label: 'Erweiterungen', rows: 3, placeholder: 'Varianten, Steigerungen, Wettkampfform …' },
+];
+
+// Textabschnitte einer Übung zum Anzeigen. Ältere Übungen haben nur eine „Beschreibung“.
+export function exerciseSections(ex) {
+  if (!ex) return [];
+  const list = SECTIONS.map((s) => ({ label: s.label, text: (ex[s.key] || '').trim() })).filter((s) => s.text);
+  if (list.length === 0 && ex.description?.trim()) return [{ label: 'Beschreibung', text: ex.description.trim() }];
+  return list;
+}
+
+// Gesamter Text einer Übung für die Suche
+export const exerciseSearchText = (ex) =>
+  [ex.title, ex.description, ...SECTIONS.map((s) => ex[s.key])].filter(Boolean).join(' ').toLowerCase();

@@ -1,13 +1,22 @@
 import { useEffect, useRef, useState } from 'react';
 import { api, isMine, isShared, canDelete } from './client.js';
-import { PHASES } from './config';
+import { PHASES, SECTIONS, exerciseSections } from './config';
 import { prepareImage } from './images';
 import ExerciseFields, { toPayload } from './ExerciseFields';
 import ImagePicker from './ImagePicker';
 
-const toForm = (e) => ({
+// Ältere Übungen haben nur eine Beschreibung: die landet beim Bearbeiten im Feld „Ablauf“
+const toForm = (e) => {
+  const hasSections = SECTIONS.some((s) => e[s.key]);
+  return {
+    ...Object.fromEntries(SECTIONS.map((s) => [s.key, e[s.key] || ''])),
+    ...(hasSections ? {} : { procedure: e.description || '' }),
+    ...baseForm(e),
+  };
+};
+
+const baseForm = (e) => ({
   title: e.title || '',
-  description: e.description || '',
   areas: e.areas || [],
   positions: e.positions || [],
   age_groups: e.age_groups || [],
@@ -153,12 +162,12 @@ export default function ExerciseModal({ exercise, imageUrl, onClose, onChanged, 
                 <dt>Sichtbar für</dt><dd>{isShared(exercise) ? 'Alle Trainer' : 'Nur mich (privat)'}</dd>
               </dl>
 
-              {exercise.description && (
-                <div className="ex-text">
-                  <h3>Beschreibung</h3>
-                  <p>{exercise.description}</p>
+              {exerciseSections(exercise).map((s) => (
+                <div key={s.label} className="ex-text">
+                  <h3>{s.label}</h3>
+                  <p>{s.text}</p>
                 </div>
-              )}
+              ))}
 
               <div className="add-box">
                 <h3>Zum Training hinzufügen</h3>
