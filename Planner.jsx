@@ -3,6 +3,7 @@ import { api, imageUrl, getUser, isShared } from './client.js';
 import ExerciseDropdown from './ExerciseDropdown';
 import ExerciseModal from './ExerciseModal';
 import PrintChoice from './PrintChoice';
+import { createTrainingPdf } from './trainingPdf';
 import VisibilityToggle from './VisibilityToggle';
 import { AGE_GROUPS, PHASE_AREAS, emptyDraft, exerciseSections, exerciseSearchText } from './config';
 
@@ -250,7 +251,7 @@ export default function Planner({ draft, setDraft, exercises, onChanged }) {
         <div className="row wrap actions">
           <button className="btn primary" onClick={() => save(false)} disabled={busy}>Training speichern</button>
           {draft.id && <button className="btn" onClick={() => save(true)} disabled={busy}>Als neues Training speichern</button>}
-          <button className="btn" onClick={() => setPrintChoice(true)} disabled={allItems.length === 0}>Drucken</button>
+          <button className="btn" onClick={() => setPrintChoice(true)} disabled={allItems.length === 0}>PDF erstellen</button>
           <button className="btn ghost" onClick={reset}>Neues Training</button>
         </div>
       </section>
@@ -269,10 +270,19 @@ export default function Planner({ draft, setDraft, exercises, onChanged }) {
       {printChoice && (
         <PrintChoice
           onClose={() => setPrintChoice(false)}
-          onChoose={(images) => {
+          onChoose={async (images) => {
             setWithImages(images);
             setPrintChoice(false);
-            setTimeout(() => window.print(), 100);
+            setError('');
+            setStatus('PDF wird erstellt …');
+            try {
+              await createTrainingPdf({ draft, byId, withImages: images, imageUrlOf: imageUrl });
+              setStatus('PDF wurde erstellt.');
+            } catch (e) {
+              setStatus('');
+              setError('PDF konnte nicht erstellt werden: ' + e.message);
+            }
+            setTimeout(() => setStatus(''), 4000);
           }}
         />
       )}
