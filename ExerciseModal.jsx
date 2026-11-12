@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { api, isMine, isShared, canDelete } from './client.js';
 import { PHASES, SECTIONS, exerciseSections } from './config';
-import { prepareImage } from './images';
+import { prepareImage, titleFromFileName } from './images';
 import ExerciseFields, { toPayload } from './ExerciseFields';
 import ImagePicker from './ImagePicker';
 
@@ -70,6 +70,8 @@ export default function ExerciseModal({ exercise, imageUrl, onClose, onChanged, 
     try {
       setNewImage(await prepareImage(file));
       setRemoveImage(false);
+      const fromFile = titleFromFileName(file.name);
+      if (fromFile && !form.title.trim()) set({ title: fromFile });
     } catch (e) {
       setError(e.message);
     }

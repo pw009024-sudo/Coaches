@@ -46,3 +46,14 @@ function load(file) {
     img.src = url;
   });
 }
+
+// Aus dem Dateinamen einen lesbaren Übungsnamen machen: „Kreuzen_im-Rückraum.png“ → „Kreuzen im Rückraum“
+export function titleFromFileName(name) {
+  return String(name || '')
+    .replace(/\.[a-z0-9]+$/i, '')
+    .replace(/[_]+/g, ' ')
+    .replace(/(\S)-(\S)/g, '$1 $2')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .slice(0, 90);
+}

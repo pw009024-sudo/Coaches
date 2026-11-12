@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { api } from './client.js';
-import { prepareImage } from './images';
+import { prepareImage, titleFromFileName } from './images';
 import ExerciseFields, { toPayload, emptyExercise } from './ExerciseFields';
 import ImagePicker from './ImagePicker';
 import VisibilityToggle from './VisibilityToggle';
@@ -12,13 +12,24 @@ export default function CreateExercise({ onSaved }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [done, setDone] = useState('');
+  // Merkt sich, ob der Name automatisch aus dem Dateinamen stammt (dann darf ein neues Bild ihn ersetzen)
+  const [autoTitle, setAutoTitle] = useState(false);
 
-  const set = (patch) => { setForm((f) => ({ ...f, ...patch })); setDone(''); };
+  const set = (patch) => {
+    setForm((f) => ({ ...f, ...patch }));
+    if ('title' in patch) setAutoTitle(false); // selbst geändert: nicht mehr automatisch überschreiben
+    setDone('');
+  };
 
   const chooseImage = async (file) => {
     setError('');
     try {
       setImage(await prepareImage(file));
+      const fromFile = titleFromFileName(file.name);
+      if (fromFile && (!form.title.trim() || autoTitle)) {
+        setForm((f) => ({ ...f, title: fromFile }));
+        setAutoTitle(true);
+      }
     } catch (e) {
       setError(e.message);
     }
@@ -42,6 +53,7 @@ export default function CreateExercise({ onSaved }) {
       setDone(`„${form.title.trim()}“ wurde gespeichert.`);
       setForm(emptyExercise());
       setImage(null);
+      setAutoTitle(false);
       onSaved?.();
     } catch (err) {
       setError('Speichern fehlgeschlagen: ' + err.message);
@@ -72,7 +84,7 @@ export default function CreateExercise({ onSaved }) {
 
       <div className="row wrap">
         <button className="btn primary" disabled={busy}>{busy ? 'Wird gespeichert …' : 'Übung speichern'}</button>
-        <button type="button" className="btn ghost" onClick={() => { setForm(emptyExercise()); setImage(null); setError(''); setDone(''); }}>
+        <button type="button" className="btn ghost" onClick={() => { setForm(emptyExercise()); setImage(null); setAutoTitle(false); setError(''); setDone(''); }}>
           Formular leeren
         </button>
       </div>

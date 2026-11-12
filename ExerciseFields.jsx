@@ -9,7 +9,7 @@ export default function ExerciseFields({ form, set }) {
     <div className="stack">
       <label>
         Name der Übung *
-        <input required value={form.title} onChange={(e) => set({ title: e.target.value })} placeholder="z. B. Kreuzen im Rückraum" />
+        <input required value={form.title} onChange={(e) => set({ title: e.target.value })} placeholder="Wird aus dem Dateinamen des Bildes übernommen" />
       </label>
 
       {SECTIONS.map((s) => (
