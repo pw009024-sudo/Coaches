@@ -1,6 +1,7 @@
 // Erstellt eine Trainingseinheit als PDF-Datei nach festen Regeln:
 // A4 hochkant, 2 cm Rand, 3 Übungen pro Seite, Bild zu Text = 1 : 2,
 // Kopfzeile mit Datum, Fußzeile mit Seitenzahl. Jede Phase beginnt auf einer neuen Seite.
+// Zu jeder Übung stehen alle hinterlegten Angaben und die Notizen im PDF.
 import { exerciseSections } from './config';
 
 const PAGE_W = 210;
@@ -13,6 +14,7 @@ const TEXT_W = IMG_W * 2; // … 2 Teile Text
 const PER_PAGE = 3;
 const PT = 0.3528; // 1 pt in mm
 const LINE = 1.25; // Zeilenabstand
+const FACT_SIZE = 8;
 
 const INK = [24, 33, 47];
 const MUTED = [93, 104, 120];
@@ -73,12 +75,16 @@ export async function createTrainingPdf({ draft, byId, withImages, imageUrlOf })
     doc.setDrawColor(...NAVY).setLineWidth(0.6).line(MARGIN, y, PAGE_W - MARGIN, y);
     y += 3;
 
-    // Notizen nur auf der ersten Seite, höchstens 2 Zeilen
+    // Notizen zum Training auf der ersten Seite
     if (pi === 0 && draft.notes?.trim()) {
-      doc.setFont('helvetica', 'italic').setFontSize(8.5).setTextColor(...MUTED);
-      const lines = fit(doc, doc.splitTextToSize(clean(draft.notes.trim()), CONTENT_W), 2);
+      doc.setFont('helvetica', 'bold').setFontSize(8.5).setTextColor(...NAVY);
+      doc.text('Notizen zum Training', MARGIN, y, { baseline: 'top' });
+      y += 8.5 * PT * LINE + 0.3;
+      doc.setFont('helvetica', 'normal').setFontSize(9).setTextColor(...INK);
+      const lines = fit(doc.splitTextToSize(clean(draft.notes.trim()), CONTENT_W), 8);
       doc.text(lines, MARGIN, y, { baseline: 'top' });
-      y += lines.length * 8.5 * PT * LINE + 2;
+      y += lines.length * 9 * PT * LINE + 3;
+      doc.setDrawColor(...RULE).setLineWidth(0.3).line(MARGIN, y - 1.5, PAGE_W - MARGIN, y - 1.5);
     }
 
     // Drei gleich große Plätze
@@ -112,15 +118,29 @@ function drawExercise(doc, ex, item, img, withImages, top, slotH) {
   const textX = useImage ? MARGIN + IMG_W + GAP : MARGIN;
   const textW = useImage ? TEXT_W : CONTENT_W;
   const bottom = top + slotH - pad;
+  const facts = factList(ex, item);
+  let factsInText = true;
 
+  // Linke Spalte: Grafik, darunter die Eckdaten der Übung (wenn Platz ist)
   if (useImage) {
-    const maxH = slotH - 2 * pad;
-    const scale = Math.min(IMG_W / img.w, maxH / img.h);
+    const avail = slotH - 2 * pad;
+    const rows = layoutFacts(doc, facts, IMG_W);
+    const factsH = rows.length * FACT_SIZE * PT * LINE;
+    const natural = (IMG_W / img.w) * img.h;
+    let imgH = Math.min(natural, avail);
+    if (imgH + 3 + factsH <= avail) {
+      factsInText = false;
+    } else if (avail - 3 - factsH >= avail * 0.5) {
+      imgH = avail - 3 - factsH; // Grafik etwas kleiner, damit die Eckdaten darunter passen
+      factsInText = false;
+    }
+    const scale = Math.min(IMG_W / img.w, imgH / img.h);
     const w = img.w * scale;
     const h = img.h * scale;
     const x = MARGIN + (IMG_W - w) / 2;
     doc.addImage(img.data, 'JPEG', x, top + pad, w, h);
     doc.setDrawColor(...RULE).setLineWidth(0.2).rect(x, top + pad, w, h);
+    if (!factsInText) drawFacts(doc, rows, MARGIN, top + pad + h + 3);
   }
 
   let y = top + pad;
@@ -132,17 +152,26 @@ function drawExercise(doc, ex, item, img, withImages, top, slotH) {
     const room = Math.floor((bottom - y) / lh);
     if (room < 1) { y = bottom; return false; }
     const all = doc.splitTextToSize(clean(text), textW);
-    const lines = fit(doc, all, room);
+    const lines = fit(all, room);
     doc.text(lines, textX, y, { baseline: 'top' });
     y += lines.length * lh + gapAfter;
     return lines.length === all.length;
   };
 
-  write(ex?.title || 'Übung wurde gelöscht', 11.5, 'bold', INK, 0.8);
-  const facts = [`${item.minutes} Min.`, ex?.min_players && `ab ${ex.min_players} Spielern`, ex?.positions?.length && ex.positions.join(', ')]
-    .filter(Boolean).join('  ·  ');
-  write(facts, 8.5, 'bold', NAVY, 1.8);
-  if (item.note?.trim()) write(`Hinweis: ${item.note.trim()}`, 9, 'italic', INK, 1.6);
+  write(ex?.title || 'Übung wurde gelöscht', 11.5, 'bold', INK, 1.2);
+
+  if (factsInText) {
+    const rows = layoutFacts(doc, facts, textW);
+    const lh = FACT_SIZE * PT * LINE;
+    const room = Math.max(0, Math.floor((bottom - y) / lh));
+    drawFacts(doc, rows.slice(0, room), textX, y);
+    y += Math.min(rows.length, room) * lh + 1.8;
+  }
+
+  if (item.note?.trim()) {
+    write('Notiz für diese Einheit', 8.5, 'bold', NAVY, 0.3);
+    write(item.note.trim(), 9, 'italic', INK, 1.6);
+  }
 
   for (const sec of exerciseSections(ex)) {
     if (!write(sec.label, 8.5, 'bold', NAVY, 0.3)) break;
@@ -150,8 +179,54 @@ function drawExercise(doc, ex, item, img, withImages, top, slotH) {
   }
 }
 
+// Alle hinterlegten Eckdaten einer Übung
+function factList(ex, item) {
+  const join = (v) => (v || []).join(', ');
+  const duration = ex?.duration_min && Number(ex.duration_min) !== Number(item.minutes)
+    ? `${item.minutes} Min. (Übung: ${ex.duration_min} Min.)`
+    : `${item.minutes} Min.`;
+  return [
+    ['Dauer', duration],
+    ['Spieler', ex?.min_players ? `mindestens ${ex.min_players}` : ''],
+    ['Bereich', join(ex?.areas)],
+    ['Positionen', join(ex?.positions)],
+    ['Altersklasse', join(ex?.age_groups)],
+    ['Schwerpunkt', join(ex?.goals)],
+    ['Methode', join(ex?.methods)],
+  ].filter(([, v]) => v);
+}
+
+// Zeilen für „Label: Wert“ mit Umbruch; das Label wird beim Zeichnen fett gesetzt
+function layoutFacts(doc, facts, width) {
+  doc.setFont('helvetica', 'bold').setFontSize(FACT_SIZE);
+  const rows = [];
+  for (const [label, value] of facts) {
+    const lines = doc.splitTextToSize(clean(`${label}: ${value}`), width);
+    lines.forEach((line, i) => rows.push({ line, label: i === 0 ? `${label}:` : '' }));
+  }
+  return rows;
+}
+
+function drawFacts(doc, rows, x, y) {
+  const lh = FACT_SIZE * PT * LINE;
+  rows.forEach((r, i) => {
+    const ty = y + i * lh;
+    doc.setFontSize(FACT_SIZE);
+    if (r.label && r.line.startsWith(r.label)) {
+      doc.setFont('helvetica', 'bold').setTextColor(...NAVY);
+      doc.text(r.label, x, ty, { baseline: 'top' });
+      const w = doc.getTextWidth(r.label + ' ');
+      doc.setFont('helvetica', 'normal').setTextColor(...INK);
+      doc.text(r.line.slice(r.label.length).trim(), x + w, ty, { baseline: 'top' });
+    } else {
+      doc.setFont('helvetica', 'normal').setTextColor(...INK);
+      doc.text(r.line, x, ty, { baseline: 'top' });
+    }
+  });
+}
+
 // Schneidet eine Zeilenliste auf max Zeilen und setzt „…“ ans Ende, wenn gekürzt
-function fit(doc, lines, max) {
+function fit(lines, max) {
   if (lines.length <= max) return lines;
   const out = lines.slice(0, max);
   out[max - 1] = out[max - 1].replace(/\s*\S*$/, '') + ' …';
