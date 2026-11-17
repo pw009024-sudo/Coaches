@@ -4,8 +4,27 @@ import { prepareImage, titleFromFileName } from './images';
 import ExerciseFields, { toPayload, emptyExercise } from './ExerciseFields';
 import ImagePicker from './ImagePicker';
 import VisibilityToggle from './VisibilityToggle';
+import ImportExercises from './ImportExercises';
 
+// Reiter „Übung anlegen“: einzeln per Formular oder viele auf einmal per Importdatei
 export default function CreateExercise({ onSaved }) {
+  const [mode, setMode] = useState('single');
+  return (
+    <>
+      <div className="segmented" role="group" aria-label="Art des Anlegens" style={{ marginBottom: '1rem' }}>
+        <button type="button" aria-pressed={mode === 'single'} className={mode === 'single' ? 'on' : ''} onClick={() => setMode('single')}>
+          Einzeln anlegen
+        </button>
+        <button type="button" aria-pressed={mode === 'import'} className={mode === 'import' ? 'on' : ''} onClick={() => setMode('import')}>
+          Übungen importieren
+        </button>
+      </div>
+      {mode === 'single' ? <SingleExercise onSaved={onSaved} /> : <ImportExercises onSaved={onSaved} />}
+    </>
+  );
+}
+
+function SingleExercise({ onSaved }) {
   const [form, setForm] = useState(emptyExercise);
   const [image, setImage] = useState(null);
   const [shared, setShared] = useState(true);
@@ -35,6 +54,12 @@ export default function CreateExercise({ onSaved }) {
     }
   };
 
+  const reset = () => {
+    setForm(emptyExercise());
+    setImage(null);
+    setAutoTitle(false);
+  };
+
   const save = async (e) => {
     e.preventDefault();
     if (!form.title.trim()) return setError('Bitte gib der Übung einen Namen.');
@@ -51,9 +76,7 @@ export default function CreateExercise({ onSaved }) {
         body: { id, ...toPayload(form), has_image: Boolean(image), shared },
       });
       setDone(`„${form.title.trim()}“ wurde gespeichert.`);
-      setForm(emptyExercise());
-      setImage(null);
-      setAutoTitle(false);
+      reset();
       onSaved?.();
     } catch (err) {
       setError('Speichern fehlgeschlagen: ' + err.message);
@@ -84,7 +107,7 @@ export default function CreateExercise({ onSaved }) {
 
       <div className="row wrap">
         <button className="btn primary" disabled={busy}>{busy ? 'Wird gespeichert …' : 'Übung speichern'}</button>
-        <button type="button" className="btn ghost" onClick={() => { setForm(emptyExercise()); setImage(null); setAutoTitle(false); setError(''); setDone(''); }}>
+        <button type="button" className="btn ghost" onClick={() => { reset(); setError(''); setDone(''); }}>
           Formular leeren
         </button>
       </div>
