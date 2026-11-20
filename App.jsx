@@ -1,24 +1,27 @@
 import { useCallback, useEffect, useState } from 'react';
-import { api, getToken, getName, logout } from './client.js';
+import { api, getToken, getName } from './client.js';
 import { emptyDraft } from './config';
 import Login from './Login';
+import Home from './Home';
 import Library from './Library';
 import CreateExercise from './CreateExercise';
 import Planner from './Planner';
 import TrainingList from './TrainingList';
+import Profile from './Profile';
 import CourtMark from './CourtMark';
 import InstallButton from './InstallButton';
 
-const TABS = [
-  { id: 'library', label: 'Übungen' },
-  { id: 'create', label: 'Übung anlegen' },
-  { id: 'planner', label: 'Training planen' },
-  { id: 'trainings', label: 'Gespeicherte Trainings' },
-];
+const TITLES = {
+  library: 'Übungen',
+  create: 'Übung anlegen',
+  planner: 'Training planen',
+  trainings: 'Gespeicherte Trainings',
+  profile: 'Profil',
+};
 
 export default function App() {
   const [loggedIn, setLoggedIn] = useState(Boolean(getToken()));
-  const [tab, setTab] = useState('library');
+  const [page, setPage] = useState('home'); // Beim Öffnen immer die Startseite
   const [exercises, setExercises] = useState([]);
   const [loadError, setLoadError] = useState('');
   const [draft, setDraft] = useState(emptyDraft);
@@ -28,6 +31,30 @@ export default function App() {
     window.addEventListener('coaches-logout', onLogout);
     return () => window.removeEventListener('coaches-logout', onLogout);
   }, []);
+
+  // Zurück-Taste des Handys führt zur Startseite statt die App zu schließen
+  useEffect(() => {
+    try { history.replaceState({ page: 'home' }, ''); } catch { /* ignorieren */ }
+    const onPop = (e) => setPage(e.state?.page || 'home');
+    window.addEventListener('popstate', onPop);
+    return () => window.removeEventListener('popstate', onPop);
+  }, []);
+
+  const go = (next) => {
+    if (next === page) return;
+    try {
+      if (page === 'home') history.pushState({ page: next }, '');
+      else history.replaceState({ page: next }, '');
+    } catch { /* ignorieren */ }
+    setPage(next);
+    window.scrollTo(0, 0);
+  };
+
+  const goHome = () => {
+    if (history.state?.page && history.state.page !== 'home') history.back();
+    else setPage('home');
+    window.scrollTo(0, 0);
+  };
 
   const loadExercises = useCallback(async () => {
     try {
@@ -55,45 +82,45 @@ export default function App() {
 
   const draftCount = draft.blocks.reduce((n, b) => n + b.items.length, 0);
 
-  if (!loggedIn) return <Login onLoggedIn={() => setLoggedIn(true)} />;
+  if (!loggedIn) {
+    return <Login onLoggedIn={() => { setLoggedIn(true); setPage('home'); }} />;
+  }
 
   return (
-    <div className="app">
+    <div className={page === 'home' ? 'app is-home' : 'app'}>
       <header className="topbar no-print">
         <CourtMark />
         <div className="topbar-inner">
-          <h1 className="brand"><img src="/icon.svg" alt="" className="brand-icon" />Coaches</h1>
+          {page === 'home' ? (
+            <h1 className="brand"><img src="/icon.svg" alt="" className="brand-icon" />Coaches</h1>
+          ) : (
+            <div className="page-head">
+              <button className="back-btn" onClick={goHome} aria-label="Zur Startseite">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7" /></svg>
+                Start
+              </button>
+              <h1 className="page-title">{TITLES[page]}</h1>
+            </div>
+          )}
           <div className="account">
             <InstallButton />
-            <span>{getName()}</span>
-            <button className="link-btn" onClick={logout}>Abmelden</button>
           </div>
         </div>
-        <nav className="tabs" aria-label="Bereiche">
-          {TABS.map((t) => (
-            <button
-              key={t.id}
-              className={tab === t.id ? 'tab active' : 'tab'}
-              aria-current={tab === t.id ? 'page' : undefined}
-              onClick={() => setTab(t.id)}
-            >
-              {t.label}
-              {t.id === 'planner' && draftCount > 0 && <span className="badge">{draftCount}</span>}
-            </button>
-          ))}
-        </nav>
       </header>
 
       <main className="content">
         {loadError && <p className="error no-print">{loadError}</p>}
-        {tab === 'library' && (
-          <Library exercises={exercises} onChanged={loadExercises} onAdd={addToDraft} onGoUpload={() => setTab('create')} />
+        {page === 'home' && (
+          <Home name={getName()} exercises={exercises} draftCount={draftCount} onOpen={go} />
         )}
-        {tab === 'create' && <CreateExercise onSaved={loadExercises} />}
-        {tab === 'planner' && (
+        {page === 'library' && (
+          <Library exercises={exercises} onChanged={loadExercises} onAdd={addToDraft} onGoUpload={() => go('create')} />
+        )}
+        {page === 'create' && <CreateExercise onSaved={loadExercises} />}
+        {page === 'planner' && (
           <Planner draft={draft} setDraft={setDraft} exercises={exercises} onChanged={loadExercises} />
         )}
-        {tab === 'trainings' && (
+        {page === 'trainings' && (
           <TrainingList
             onOpen={(t) => {
               setDraft({
@@ -106,10 +133,11 @@ export default function App() {
                 owner_id: t.owner_id || null,
                 blocks: t.blocks,
               });
-              setTab('planner');
+              go('planner');
             }}
           />
         )}
+        {page === 'profile' && <Profile exercises={exercises} />}
       </main>
     </div>
   );
